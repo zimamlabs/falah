@@ -1,0 +1,4 @@
+-keepattributes *Annotation*, InnerClasses
+-dontwarn org.slf4j.**
+-keep,includedescriptorclasses class dev.falah.core.**$$serializer { *; }
+-keepclassmembers class dev.falah.core.** { *** Companion; }
