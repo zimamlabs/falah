@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import dev.falah.prayer.R
 import dev.falah.core.AsrFactor
 import dev.falah.core.Method
 import dev.falah.core.Prayer
