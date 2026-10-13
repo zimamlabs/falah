@@ -10,6 +10,7 @@ Falah (فلاح, success) shows today's five prayers and the sunrise for where y
 
 - **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, accurate to about a minute.
 - **Next prayer** and the time left, updated as the day goes.
+- **Notifications** at the prayers you pick, set again after a restart.
 - **Qibla** direction from where you are.
 - **Methods**: Egyptian General Authority (default), Muslim World League, Umm al-Qura, Karachi and North America, with Standard or Hanafi Asr.
 - **Places**: Cairo, Alexandria, Makkah, Madinah, Riyadh, Dubai, Istanbul, London, New York and more.
@@ -56,7 +57,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ## Roadmap
 
-Notifications at each prayer (with a choice of which), your own location from the phone, a daily prayer log, a compass that follows the phone, and a home-screen widget. A Linux edition comes after version 1.
+Your own location from the phone, a daily prayer log, a compass that follows the phone, and a home-screen widget. A Linux edition comes after version 1.
 
 ## Licence
 

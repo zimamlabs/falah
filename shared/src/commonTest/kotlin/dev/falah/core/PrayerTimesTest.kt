@@ -64,3 +64,32 @@ class PrayerTimesTest {
         assertNull(PrayerTimes.clock(null))
     }
 }
+
+class ScheduleTest {
+    private val zone = kotlinx.datetime.TimeZone.UTC
+    private val all = Prayer.entries.toSet()
+
+    @Test fun theNextAlertIsTheFirstChosenPrayerAfterNow() {
+        val now = kotlinx.datetime.Instant.parse("2026-03-21T00:00:00Z")
+        val a = Schedule.next(now, zone, 30.0444, 31.2357, Method.Egyptian, AsrFactor.Standard, all)!!
+        assertEquals(Prayer.Fajr, a.prayer)
+        assertTrue(a.atMillis > now.toEpochMilliseconds())
+    }
+
+    @Test fun afterIshaTheNextAlertIsTomorrowsFajr() {
+        val now = kotlinx.datetime.Instant.parse("2026-03-21T23:30:00Z")
+        val a = Schedule.next(now, zone, 30.0444, 31.2357, Method.Egyptian, AsrFactor.Standard, all)!!
+        assertEquals(Prayer.Fajr, a.prayer)
+        assertTrue(a.atMillis - now.toEpochMilliseconds() in 1 * 3_600_000L..8 * 3_600_000L)
+    }
+
+    @Test fun onlyChosenPrayersAreConsidered() {
+        val now = kotlinx.datetime.Instant.parse("2026-03-21T00:00:00Z")
+        val a = Schedule.next(now, zone, 30.0444, 31.2357, Method.Egyptian, AsrFactor.Standard, setOf(Prayer.Maghrib))!!
+        assertEquals(Prayer.Maghrib, a.prayer)
+    }
+
+    @Test fun nothingChosenMeansNoAlert() {
+        assertNull(Schedule.next(kotlinx.datetime.Instant.parse("2026-03-21T00:00:00Z"), zone, 30.0, 31.0, Method.Egyptian, AsrFactor.Standard, emptySet()))
+    }
+}
