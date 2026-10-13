@@ -43,21 +43,21 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
 
-const val APP_VERSION = "0.1.0"
+const val APP_VERSION = "0.2.0"
 
 @Composable
-fun FalahApp(prefs: Prefs) {
+fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform) {
     FalahTheme {
         var splash by remember { mutableStateOf(true) }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            Today(prefs)
+            Today(prefs, platform)
             AnimatedVisibility(splash, exit = fadeOut()) { Splash { splash = false } }
         }
     }
 }
 
 @Composable
-private fun Today(prefs: Prefs) {
+private fun Today(prefs: Prefs, platform: Platform) {
     var placeName by remember { mutableStateOf(prefs.get("place") ?: "Cairo") }
     var lat by remember { mutableStateOf(prefs.get("lat")?.toDoubleOrNull() ?: 30.0444) }
     var lon by remember { mutableStateOf(prefs.get("lon")?.toDoubleOrNull() ?: 31.2357) }
@@ -86,7 +86,7 @@ private fun Today(prefs: Prefs) {
                     Places.forEach { p ->
                         DropdownMenuItem(text = { Text(p.name) }, onClick = {
                             menu = false; placeName = p.name; lat = p.latitude; lon = p.longitude
-                            prefs.set("place", p.name); prefs.set("lat", p.latitude.toString()); prefs.set("lon", p.longitude.toString())
+                            prefs.set("place", p.name); prefs.set("lat", p.latitude.toString()); prefs.set("lon", p.longitude.toString()); platform.reschedule()
                         })
                     }
                 }
@@ -113,6 +113,21 @@ private fun Today(prefs: Prefs) {
             }
         }
 
+        if (platform.canNotify) Panel {
+            Text("Notify me at", style = MaterialTheme.typography.titleSmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Prayer.entries.filter { it != Prayer.Sunrise }.forEach { p ->
+                    var on by remember { mutableStateOf(prefs.get("notify.${p.name}") == "1") }
+                    FilterChip(on, {
+                        val turnOn = !on
+                        if (turnOn) platform.ensureNotifications { ok -> if (ok) { on = true; prefs.set("notify.${p.name}", "1"); platform.reschedule() } }
+                        else { on = false; prefs.set("notify.${p.name}", "0"); platform.reschedule() }
+                    }, { Text(p.label) })
+                }
+            }
+            Text("A notification at the time of each prayer you pick.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
         val qibla = PrayerTimes.qibla(lat, lon)
         Panel {
             Text("Qibla", style = MaterialTheme.typography.titleSmall)
@@ -128,10 +143,10 @@ private fun Today(prefs: Prefs) {
         Panel {
             Text("Calculation", style = MaterialTheme.typography.titleSmall)
             Method.entries.forEach { m ->
-                FilterChip(method == m, { method = m; prefs.set("method", m.name) }, { Text(m.label) })
+                FilterChip(method == m, { method = m; prefs.set("method", m.name); platform.reschedule() }, { Text(m.label) })
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AsrFactor.entries.forEach { a -> FilterChip(asr == a, { asr = a; prefs.set("asr", a.name) }, { Text("Asr: ${a.label}") }) }
+                AsrFactor.entries.forEach { a -> FilterChip(asr == a, { asr = a; prefs.set("asr", a.name); platform.reschedule() }, { Text("Asr: ${a.label}") }) }
             }
         }
 
