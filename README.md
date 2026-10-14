@@ -9,7 +9,11 @@ Falah (فلاح, success) shows today's five prayers and the sunrise for where y
 ## What is in it
 
 - **Home**: a greeting with the Gregorian and Hijri date, the next prayer with a countdown ring, a timeline of the day with a tick for each prayer you pray, a streak and a week strip, a mini qibla card, a daily reminder (a short dua) and quick actions. Times, Qibla and Settings are pages reached from the bottom bar.
-- **Prayer log**: tick the prayers you prayed; the streak and week strip follow. The log is a plain file.
+- **Prayer log**: tick the prayers you prayed; the streak and week strip follow. The Log page shows a month calendar of rings, the month's totals, and lets you open and edit any past day. The log is a plain file.
+- **Monthly timetable**: every day of a month with all six times (Times, then Month).
+- **Tasbih**: a counter with six common dhikr and a round for each; totals per day and all time are saved.
+- **Reminder offsets**: be notified at the prayer or 5, 10, 15 or 30 minutes before it, for each prayer.
+- **Live qibla compass**: on phones with a compass sensor the dial follows the phone, tells you how far to turn, and says when you face the qibla; without a sensor it shows the bearing from north.
 - **First-run tour** and a one-time **What's new** note after each update.
 - **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, accurate to about a minute.
 - **Next prayer** and the time left, updated as the day goes.
@@ -64,7 +68,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ## Roadmap
 
-Prayer log history and a monthly view, a monthly timetable, a tasbih counter, reminder offsets, a live compass for the qibla, your own location from the phone, and a home-screen widget. A Linux edition comes after version 1.
+Your own location from the phone, a home-screen widget, and a statistics page. A Linux edition comes after version 1.
 
 ## Licence
 

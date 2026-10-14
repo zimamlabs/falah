@@ -120,7 +120,11 @@ fun SettingsPage(s: FalahState, showTour: () -> Unit) = Page {
     if (s.platform.canNotify) FalahCard {
         SectionTitle(Icons.Rounded.Notifications, "Notify me at")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Prayer.entries.filter { it != Prayer.Sunrise }.forEach { p -> FilterChip(s.notifyOn(p), { s.setNotify(p, !s.notifyOn(p)) }, { Text(p.label) }) } }
-        Text("A notification at the time of each prayer you pick.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("A notification at the time of each prayer you pick, or a few minutes before it.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Prayer.entries.filter { it != Prayer.Sunrise && s.notifyOn(it) }.forEach { p ->
+            Text(p.label, style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(0, 5, 10, 15, 30).forEach { m -> FilterChip(s.offsetOf(p) == m, { s.setOffset(p, m) }, { Text(if (m == 0) "At the time" else "$m min before") }) } }
+        }
     }
     FalahCard {
         SectionTitle(Icons.Rounded.Palette, "Appearance")

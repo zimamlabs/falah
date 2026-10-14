@@ -20,7 +20,7 @@ import androidx.compose.material.icons.rounded.AutoStories
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
@@ -54,7 +54,7 @@ fun HomePage(s: FalahState, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhat
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             ActionTile(Icons.Rounded.Schedule, "Times", Modifier.weight(1f)) { go(Tab.Times) }
             ActionTile(Icons.Rounded.Explore, "Qibla", Modifier.weight(1f)) { go(Tab.Qibla) }
-            if (s.platform.canNotify) ActionTile(Icons.Rounded.NotificationsActive, "Reminders", Modifier.weight(1f)) { go(Tab.Settings) }
+            ActionTile(Icons.Rounded.TouchApp, "Tasbih", Modifier.weight(1f)) { go(Tab.Tasbih) }
             ActionTile(Icons.Rounded.Settings, "Settings", Modifier.weight(1f)) { go(Tab.Settings) }
         }
         Timeline(s)

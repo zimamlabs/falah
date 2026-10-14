@@ -30,6 +30,11 @@ object Onboarding {
 /** Short notes per version, taken from the changelog; shown once after an update. */
 object ReleaseNotes {
     private val notes: Map<String, List<String>> = mapOf(
+        "0.4.0" to listOf(
+            "A prayer log with a month calendar, and a monthly timetable.",
+            "A tasbih counter that saves your totals.",
+            "Choose to be notified a few minutes before a prayer, and a live compass for the qibla.",
+        ),
         "0.3.0" to listOf(
             "A Home page with the next prayer, today's times and shortcuts.",
             "A first-run tour, and these notes after each update.",

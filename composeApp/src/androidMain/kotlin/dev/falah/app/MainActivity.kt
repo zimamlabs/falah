@@ -17,6 +17,12 @@ import android.provider.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import android.hardware.GeomagneticField
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import dev.falah.core.Compass
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
@@ -50,6 +56,24 @@ class MainActivity : ComponentActivity() {
                 else { pending = done; permission.launch(Manifest.permission.POST_NOTIFICATIONS) }
             }
             override fun reschedule() = PrayerAlarms.schedule(this@MainActivity)
+            private var listener: SensorEventListener? = null
+            private val sensors get() = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            override val hasCompass: Boolean get() = sensors.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null
+            override fun startCompass(latitude: Double, longitude: Double, onHeading: (Double, Int) -> Unit) {
+                stopCompass()
+                val sensor = sensors.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) ?: return
+                val declination = GeomagneticField(latitude.toFloat(), longitude.toFloat(), 0f, System.currentTimeMillis()).declination.toDouble()
+                val matrix = FloatArray(9); val orientation = FloatArray(3)
+                listener = object : SensorEventListener {
+                    override fun onSensorChanged(event: SensorEvent) {
+                        SensorManager.getRotationMatrixFromVector(matrix, event.values)
+                        SensorManager.getOrientation(matrix, orientation)
+                        onHeading(Compass.trueHeading(Math.toDegrees(orientation[0].toDouble()), declination), event.accuracy)
+                    }
+                    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+                }.also { sensors.registerListener(it, sensor, SensorManager.SENSOR_DELAY_UI) }
+            }
+            override fun stopCompass() { listener?.let { sensors.unregisterListener(it) }; listener = null }
         }
         platform.reschedule()
         setContent { FalahApp(mirrored, platform, files, resumed) }

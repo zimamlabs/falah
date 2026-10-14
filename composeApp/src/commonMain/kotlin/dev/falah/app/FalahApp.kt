@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Explore
+import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
@@ -33,10 +35,11 @@ import dev.falah.core.Welcome
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
-const val APP_VERSION = "0.3.0"
+const val APP_VERSION = "0.4.0"
 
 enum class Tab(val label: String, val icon: ImageVector) {
-    Home("Home", Icons.Rounded.Home), Times("Times", Icons.Rounded.Schedule), Qibla("Qibla", Icons.Rounded.Explore), Settings("Settings", Icons.Rounded.Settings),
+    Home("Home", Icons.Rounded.Home), Times("Times", Icons.Rounded.Schedule), Qibla("Qibla", Icons.Rounded.Explore), Tasbih("Tasbih", Icons.Rounded.TouchApp), Log("Log", Icons.Rounded.CalendarMonth),
+    Settings("Settings", Icons.Rounded.Settings), // reached from Home, not shown in the bar
 }
 
 /** [resumed] changes each time the app comes back to the front, so the data folder can be picked again after the permission screen. */
@@ -66,15 +69,17 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                        Tab.entries.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label) }, label = { Text(t.label) }) }
+                        Tab.entries.filter { it != Tab.Settings }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label) }, label = { Text(t.label) }) }
                     }
                 },
             ) { inner ->
                 Box(Modifier.padding(inner)) {
                     when (tab) {
                         Tab.Home -> HomePage(state, { tab = it }, hiddenNotes) { hiddenNotes = true; prefs.set("notes.hidden", APP_VERSION) }
-                        Tab.Times -> TimesPage(state)
-                        Tab.Qibla -> QiblaPage(state)
+                        Tab.Times -> TimesTab(state)
+                        Tab.Qibla -> CompassPage(state, resumed)
+                        Tab.Tasbih -> TasbihPage(state)
+                        Tab.Log -> LogPage(state)
                         Tab.Settings -> SettingsPage(state) { tourAgain = true }
                     }
                 }
