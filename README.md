@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/icon.svg" width="120" alt="Falah"></p>
+<p align="center"><img src="docs/icon.png" width="120" alt="Falah"></p>
 
 <h1 align="center">Falah</h1>
 
@@ -8,6 +8,9 @@ Falah (فلاح, success) shows today's five prayers and the sunrise for where y
 
 ## What is in it
 
+- **Home**: a greeting with the Gregorian and Hijri date, the next prayer with a countdown ring, a timeline of the day with a tick for each prayer you pray, a streak and a week strip, a mini qibla card, a daily reminder (a short dua) and quick actions. Times, Qibla and Settings are pages reached from the bottom bar.
+- **Prayer log**: tick the prayers you prayed; the streak and week strip follow. The log is a plain file.
+- **First-run tour** and a one-time **What's new** note after each update.
 - **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, accurate to about a minute.
 - **Next prayer** and the time left, updated as the day goes.
 - **Notifications** at the prayers you pick, set again after a restart.
@@ -16,6 +19,10 @@ Falah (فلاح, success) shows today's five prayers and the sunrise for where y
 - **Places**: Cairo, Alexandria, Makkah, Madinah, Riyadh, Dubai, Istanbul, London, New York and more.
 
 Prayer times are a calculation, not an authority: check them against your local mosque or religious authority when it matters.
+
+## Your data
+
+Settings and the prayer log are plain files (`settings.txt`, `prayer-log.csv`). With *All files access* they live in a visible `Zimam/Falah` folder on the phone, which survives reinstalling the app; without it they stay inside the app. When the folder changes, everything is copied and checked (file count, size, SHA-256) and the old folder is kept as a backup; nothing is deleted unless you remove it from Settings after a fresh check.
 
 ## Download
 
@@ -57,7 +64,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ## Roadmap
 
-Your own location from the phone, a daily prayer log, a compass that follows the phone, and a home-screen widget. A Linux edition comes after version 1.
+Prayer log history and a monthly view, a monthly timetable, a tasbih counter, reminder offsets, a live compass for the qibla, your own location from the phone, and a home-screen widget. A Linux edition comes after version 1.
 
 ## Licence
 
