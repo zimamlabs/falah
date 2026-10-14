@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- **Prayer log history.** A Log page with a month calendar of rings, the month's totals, streaks, and any past day you can open and edit.
+- **Monthly timetable.** Times has a Month view with every day and all six times; the time-zone offset follows clock changes.
+- **Tasbih.** A counter with six dhikr, a round each, saved totals per day and all time (`tasbih.csv` in your data folder).
+- **Reminder offsets.** For each prayer you pick, notify at the time or 5, 10, 15 or 30 minutes before.
+- **Live qibla compass.** The dial follows the phone's sensor (corrected for magnetic declination), says how far to turn and when you face the qibla, asks you to calibrate when the sensor is unsure, and falls back to the fixed bearing when there is no sensor.
+
 ## 0.3.0
 
 - **New icon.** The final Falah icon (a mosque and the sun in a mihrab arch) on the launcher, the splash screen and the Settings page.

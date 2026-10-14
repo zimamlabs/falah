@@ -35,21 +35,22 @@ object PrayerAlarms {
             Method.entries.firstOrNull { it.name == prefs.getString("method", null) } ?: Method.Egyptian,
             AsrFactor.entries.firstOrNull { it.name == prefs.getString("asr", null) } ?: AsrFactor.Standard,
             chosen(prefs),
+            Prayer.entries.associateWith { prefs.getString("offset.${it.name}", null)?.toIntOrNull() ?: 0 },
         ) ?: return
-        prefs.edit().putString("next.prayer", next.prayer.name).apply()
+        prefs.edit().putString("next.prayer", next.prayer.name).putInt("next.before", next.minutesBefore).apply()
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
         if (exact) manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.atMillis, intent)
         else manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.atMillis, intent)
     }
 
-    fun notify(context: Context, prayer: Prayer) {
+    fun notify(context: Context, prayer: Prayer, minutesBefore: Int = 0) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(NotificationChannel(CHANNEL, "Prayer times", NotificationManager.IMPORTANCE_HIGH))
         val open = PendingIntent.getActivity(context, 1, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val n = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle("${prayer.label}  ${prayer.arabic}")
-            .setContentText("It is time for ${prayer.label}.")
+            .setContentText(if (minutesBefore > 0) "${prayer.label} in $minutesBefore min." else "It is time for ${prayer.label}.")
             .setAutoCancel(true).setContentIntent(open).setCategory(NotificationCompat.CATEGORY_REMINDER).build()
         manager.notify(prayer.ordinal, n)
     }
@@ -60,7 +61,7 @@ class PrayerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val prefs = context.getSharedPreferences("falah", Context.MODE_PRIVATE)
         val prayer = Prayer.entries.firstOrNull { it.name == prefs.getString("next.prayer", null) }
-        if (prayer != null && prayer in PrayerAlarms.chosen(prefs)) PrayerAlarms.notify(context, prayer)
+        if (prayer != null && prayer in PrayerAlarms.chosen(prefs)) PrayerAlarms.notify(context, prayer, prefs.getInt("next.before", 0))
         PrayerAlarms.schedule(context)
     }
 }

@@ -12,6 +12,7 @@ import dev.falah.core.Method
 import dev.falah.core.Prayer
 import dev.falah.core.PrayerLog
 import dev.falah.core.PrayerTimes
+import dev.falah.core.TasbihLog
 import dev.falah.core.of
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -34,6 +35,7 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     var now by mutableStateOf(Clock.System.now())
     var log by mutableStateOf(PrayerLog())
     var notifyTick by mutableIntStateOf(0)
+    var tasbih by mutableStateOf(TasbihLog())
 
     init { reload() }
 
@@ -47,6 +49,7 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
         themeMode = prefs.get("theme") ?: "system"
         hijriAdjust = prefs.get("hijri.adjust")?.toIntOrNull() ?: 0
         log = PrayerLog.decode(files.read(LOG_FILE).orEmpty())
+        tasbih = TasbihLog.decode(files.read(TASBIH_FILE).orEmpty())
     }
 
     private val zone get() = TimeZone.currentSystemDefault()
@@ -90,7 +93,15 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     }
 
     fun prayed(p: Prayer): Boolean = p in log.done(today)
-    fun mark(p: Prayer, on: Boolean) { log = log.mark(today, p, on); files.write(LOG_FILE, log.encode()) }
+    fun mark(p: Prayer, on: Boolean) = markOn(today, p, on)
+    fun markOn(date: kotlinx.datetime.LocalDate, p: Prayer, on: Boolean) { log = log.mark(date, p, on); files.write(LOG_FILE, log.encode()) }
 
-    companion object { const val LOG_FILE = "prayer-log.csv" }
+    fun tap(key: String, n: Int = 1) { tasbih = tasbih.add(today, key, n); files.write(TASBIH_FILE, tasbih.encode()) }
+
+    /** Minutes before the prayer the notification fires; 0 is at the prayer. */
+    fun offsetOf(p: Prayer): Int { notifyTick; return prefs.get("offset.${p.name}")?.toIntOrNull() ?: 0 }
+    fun setOffset(p: Prayer, minutes: Int) { prefs.set("offset.${p.name}", minutes.toString()); platform.reschedule(); notifyTick++ }
+
+    companion object { const val LOG_FILE = "prayer-log.csv"
+        const val TASBIH_FILE = "tasbih.csv" }
 }
