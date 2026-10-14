@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- A better splash screen: the name sits clearly apart from the logo, and the logo and name ease in.
+
 ## 0.2.1
 
 - **New icon.** A mihrab arch with the Zimam dot, on the app icon and the splash screen.

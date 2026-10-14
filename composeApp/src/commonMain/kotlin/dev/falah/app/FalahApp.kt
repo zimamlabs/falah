@@ -43,7 +43,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
 
-const val APP_VERSION = "0.2.1"
+const val APP_VERSION = "0.2.2"
 
 @Composable
 fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform) {
