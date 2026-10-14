@@ -2,7 +2,7 @@
 
 <h1 align="center">Falah</h1>
 
-<p align="center">Prayer times, reminders and the qibla, by <a href="https://github.com/zimamlabs">Zimam</a>.</p>
+<p align="center">Prayer times, reminders and the qibla, by <a href="https://github.com/zimamlabs">Zimam Labs</a>.</p>
 
 <p align="center">
   <a href="../../releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/zimamlabs/falah?color=FF5A1F&labelColor=1A1613"></a>
@@ -11,16 +11,12 @@
   <img alt="Android" src="https://img.shields.io/badge/Android-8.0%2B-FF5A1F?labelColor=1A1613">
 </p>
 
+## What it is
 
 Falah (فلاح, success) shows today's five prayers and the sunrise for where you are, tells you which prayer is next and how long is left, keeps a log of the prayers you pray, and points to the qibla. It works offline, has no account and sends nothing anywhere.
 
-## Screenshots
+## Features
 
-Screenshots will be added here after the first round of phone testing; until then the board above shows the look.
-
-## What is in it
-
-- **Languages**: English and Arabic (العربية) with a right-to-left layout; choose the language and the digit style (0 1 2 3 or ٠ ١ ٢ ٣) in Settings, or follow the system.
 - **Home**: a greeting with the Gregorian and Hijri date, the next prayer with a countdown ring, a timeline of the day with a tick for each prayer you pray, a streak and a week strip, a mini qibla card, a daily reminder (a short dua) and quick actions. Times, Qibla and Settings are pages reached from the bottom bar.
 - **Prayer log**: tick the prayers you prayed; the streak and week strip follow. The Log page shows a month calendar of rings, the month's totals, and lets you open and edit any past day. The log is a plain file.
 - **Monthly timetable**: every day of a month with all six times (Times, then Month).
@@ -37,10 +33,13 @@ Screenshots will be added here after the first round of phone testing; until the
 
 Prayer times are a calculation, not an authority: check them against your local mosque or religious authority when it matters.
 
-## Your data and privacy
+## Languages
 
-No account, no tracking, no network use at all. 
-Settings and the prayer log are plain files (`settings.txt`, `prayer-log.csv`). With *All files access* they live in a visible `Zimam/Falah` folder on the phone, which survives reinstalling the app; without it they stay inside the app. When the folder changes, everything is copied and checked (file count, size, SHA-256) and the old folder is kept as a backup; nothing is deleted unless you remove it from Settings after a fresh check.
+English today. Arabic and right-to-left screens are being added; this line will say when they are in.
+
+## Screenshots
+
+Screenshots: coming with the next release.
 
 ## Download
 
@@ -56,7 +55,7 @@ Get the file for your phone from the [latest release](../../releases/latest). Ne
 sha256sum -c Falah_<version>_Android_arm64-v8a.apk.sha256
 ```
 
-### Verify the Android download
+## Verify
 
 Every APK is signed with Falah's own key. Android installs it without a store because the signature is valid, and shows its usual "unknown source" notice for anything that did not come from Google Play. To check a file is really ours, compare its signing certificate with this fingerprint:
 
@@ -67,6 +66,14 @@ SHA-256: CE:37:B1:30:E6:8E:27:4F:DD:62:5F:BB:EE:E3:96:60:DA:18:ED:44:47:1F:AB:CF
 ```
 apksigner verify --print-certs Falah_<version>_Android_arm64-v8a.apk
 ```
+
+## Where your data lives
+
+Settings and the prayer log are plain files (`settings.txt`, `prayer-log.csv`). With *All files access* they live in a visible `Zimam/Falah` folder on the phone, which survives reinstalling the app; without it they stay inside the app. When the folder changes, everything is copied and checked (file count, size, SHA-256) and the old folder is kept as a backup; nothing is deleted unless you remove it from Settings after a fresh check.
+
+## Privacy
+
+No account, no ads, no tracking. Falah keeps your data on your phone in plain files you can open anywhere, and sends nothing over the network.
 
 ## Build
 
