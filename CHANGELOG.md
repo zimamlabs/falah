@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+
+- **Arabic and right-to-left.** Falah now has an Arabic interface with a mirrored layout (Settings, Language: System, English or العربية, applied at once). Prayer names, Hijri and Gregorian dates, the duas, the tour, the notes, About and the prayer notifications are all in Arabic. Digits can be Western (0 1 2 3) or Arabic-Indic (٠ ١ ٢ ٣). In Arabic the week in the log starts on Saturday. The compass is not mirrored.
+
 ## 0.4.1
 
 - **A new look.** Every screen follows the icon: warm near-black or ivory, the Zimam orange as the one accent, a soft glow behind the hero, large rounded cards with a hairline border and the small orange diamond.

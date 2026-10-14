@@ -1,5 +1,8 @@
 package dev.falah.app
 
+import dev.falah.core.Str
+import dev.falah.core.Lang
+import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,9 +58,9 @@ private fun Page(content: @Composable () -> Unit) {
 fun PlacePicker(s: FalahState) {
     var menu by remember { mutableStateOf(false) }
     Box {
-        OutlinedButton({ menu = true }) { Icon16(); Text(" ${s.placeName}") }
+        OutlinedButton({ menu = true }) { Icon16(); Text(" ${placeShown(s.placeName)}") }
         DropdownMenu(menu, { menu = false }) {
-            Places.forEach { p -> DropdownMenuItem(text = { Text(p.name) }, onClick = { menu = false; s.choosePlace(p) }) }
+            Places.forEach { p -> DropdownMenuItem(text = { Text(p.shown()) }, onClick = { menu = false; s.choosePlace(p) }) }
         }
     }
 }
@@ -67,73 +70,59 @@ private fun Icon16() = androidx.compose.material3.Icon(Icons.Rounded.Place, null
 
 @Composable
 fun TimesPage(s: FalahState) = Page {
-    Text("Prayer times", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+    Text(Str.TimesTitle.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
     PlacePicker(s)
     FalahCard {
-        SectionTitle(Icons.Rounded.Schedule, s.today.longText(), "${s.hijri.day} ${s.hijri.monthName} ${s.hijri.year}")
+        SectionTitle(Icons.Rounded.Schedule, s.today.longText(), Str.HijriShort.t(s.hijri.day, s.hijri.monthTitle(lang()), s.hijri.year))
         Prayer.entries.forEach { p ->
             val upcoming = !s.next.tomorrow && p == s.next.prayer
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(p.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal, color = if (upcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                Text(p.arabic, Modifier.padding(end = 16.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(PrayerTimes.clock(s.times.of(p)) ?: "--:--", style = MaterialTheme.typography.titleMedium, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal)
+                Text(p.shown(), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal, color = if (upcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                p.second()?.let { Text(it, Modifier.padding(end = 16.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                Text(num(PrayerTimes.clock(s.times.of(p)) ?: "--:--"), style = MaterialTheme.typography.titleMedium, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal)
             }
         }
     }
-    Text("Prayer times are a calculation, not an authority: check them against your local mosque or religious authority when it matters.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-@Composable
-fun QiblaPage(s: FalahState) = Page {
-    Text("Qibla", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-    PlacePicker(s)
-    val qibla = PrayerTimes.qibla(s.lat, s.lon)
-    FalahCard {
-        SectionTitle(Icons.Rounded.Explore, "Direction of the Kaaba")
-        Text("N", Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Ring(1f, 220.dp, 6.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.outlineVariant) {
-                Text("↑", Modifier.rotate(qibla.toFloat()), style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.primary)
-            }
-        }
-        Text("${qibla.toInt()}° from true north", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        Text("The arrow points the way when the top of the phone faces north. A live compass comes in the next version.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+    Text(Str.TimesDisclaimer.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsPage(s: FalahState, openAbout: () -> Unit) = Page {
-    Text("Settings", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+    Text(Str.TabSettings.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
     FalahCard {
-        SectionTitle(Icons.Rounded.Place, "Place")
+        SectionTitle(Icons.Rounded.Place, Str.SettingsPlace.t())
         PlacePicker(s)
     }
     FalahCard {
-        SectionTitle(Icons.Rounded.Tune, "Calculation")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Method.entries.forEach { m -> FilterChip(s.method == m, { s.chooseMethod(m) }, { Text(m.label) }) } }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { AsrFactor.entries.forEach { a -> FilterChip(s.asr == a, { s.chooseAsr(a) }, { Text("Asr: ${a.label}") }) } }
-        Text("Hijri date adjustment", style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(-1, 0, 1).forEach { d -> FilterChip(s.hijriAdjust == d, { s.chooseHijriAdjust(d) }, { Text(if (d > 0) "+$d day" else if (d < 0) "$d day" else "None") }) } }
-        Text("Moon-sighting calendars can start a day apart from the calculated one.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionTitle(Icons.Rounded.Tune, Str.SettingsCalc.t())
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Method.entries.forEach { m -> FilterChip(s.method == m, { s.chooseMethod(m) }, { Text(m.shown()) }) } }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { AsrFactor.entries.forEach { a -> FilterChip(s.asr == a, { s.chooseAsr(a) }, { Text(Str.AsrLine.t(a.shown())) }) } }
+        Text(Str.HijriAdjust.t(), style = MaterialTheme.typography.labelLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(-1, 0, 1).forEach { d -> FilterChip(s.hijriAdjust == d, { s.chooseHijriAdjust(d) }, { Text(if (d > 0) Str.DayPlus.t(d) else if (d < 0) Str.DayMinus.t(-d) else Str.NoneOpt.t()) }) } }
+        Text(Str.MoonNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     if (s.platform.canNotify) FalahCard {
-        SectionTitle(Icons.Rounded.Notifications, "Notify me at")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Prayer.entries.filter { it != Prayer.Sunrise }.forEach { p -> FilterChip(s.notifyOn(p), { s.setNotify(p, !s.notifyOn(p)) }, { Text(p.label) }) } }
-        Text("A notification at the time of each prayer you pick, or a few minutes before it.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionTitle(Icons.Rounded.Notifications, Str.NotifyAt.t())
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Prayer.entries.filter { it != Prayer.Sunrise }.forEach { p -> FilterChip(s.notifyOn(p), { s.setNotify(p, !s.notifyOn(p)) }, { Text(p.shown()) }) } }
+        Text(Str.NotifyNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Prayer.entries.filter { it != Prayer.Sunrise && s.notifyOn(it) }.forEach { p ->
-            Text(p.label, style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(0, 5, 10, 15, 30).forEach { m -> FilterChip(s.offsetOf(p) == m, { s.setOffset(p, m) }, { Text(if (m == 0) "At the time" else "$m min before") }) } }
+            Text(p.shown(), style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(0, 5, 10, 15, 30).forEach { m -> FilterChip(s.offsetOf(p) == m, { s.setOffset(p, m) }, { Text(if (m == 0) Str.AtTheTime.t() else Str.MinBefore.t(m)) }) } }
         }
     }
     FalahCard {
-        SectionTitle(Icons.Rounded.Palette, "Appearance")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v) }) } }
+        SectionTitle(Icons.Rounded.Palette, Str.Appearance.t())
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v.t()) }) } }
+    }
+    FalahCard {
+        SectionTitle(Icons.Rounded.Translate, Str.LanguageTitle.t())
+        LanguageChips(s)
     }
     DataCard(s)
     FalahCard(onClick = openAbout) {
-        SectionTitle(Icons.Rounded.Info, "About Falah", "version $APP_VERSION")
-        Text("The tour, what's new, privacy and links.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionTitle(Icons.Rounded.Info, Str.AboutCardTitle.t(), Str.VersionLine.t(APP_VERSION))
+        Text(Str.AboutCardText.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -142,23 +131,37 @@ private fun DataCard(s: FalahState) {
     var tick by remember { mutableStateOf(0) }
     var confirm by remember { mutableStateOf(false) }
     FalahCard {
-        SectionTitle(Icons.Rounded.Folder, "Your data")
-        Text(if (s.files.shared) "Kept in the Zimam folder:" else "Kept inside the app:", style = MaterialTheme.typography.bodyMedium)
+        SectionTitle(Icons.Rounded.Folder, Str.YourData.t())
+        Text(if (s.files.shared) Str.KeptShared.t() else Str.KeptPrivate.t(), style = MaterialTheme.typography.bodyMedium)
         Text(s.files.location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("Settings and your prayer log are plain files. In the Zimam folder they survive reinstalling the app.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        s.files.message?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
-        if (s.files.canAskAccess) Button({ s.files.askAccess() }) { Text("Allow All files access") }
+        Text(Str.DataNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        s.files.message?.let { (from, to) -> Text(Str.FolderVerifyFailed.raw(from, to), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+        if (s.files.canAskAccess) Button({ s.files.askAccess() }) { Text(Str.AllowAccess.t()) }
         tick.let { }
         s.files.removableOld()?.let { old ->
-            Text("The earlier private copy is still at $old. It is checked and safe to remove.", style = MaterialTheme.typography.bodySmall)
-            OutlinedButton({ confirm = true }) { Text("Remove the old private copy") }
+            Text(Str.OldCopyAt.raw(old), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton({ confirm = true }) { Text(Str.RemoveOldCopy.t()) }
         }
     }
     if (confirm) AlertDialog(
         onDismissRequest = { confirm = false },
-        title = { Text("Remove the old copy?") },
-        text = { Text("Everything in it was copied to the Zimam folder and checked again just now. This deletes only the old private folder.") },
-        confirmButton = { TextButton({ confirm = false; s.files.removeOld(); tick++ }) { Text("Remove") } },
-        dismissButton = { TextButton({ confirm = false }) { Text("Keep it") } },
+        title = { Text(Str.RemoveOldTitle.t()) },
+        text = { Text(Str.RemoveOldText.t()) },
+        confirmButton = { TextButton({ confirm = false; s.files.removeOld(); tick++ }) { Text(Str.Remove.t()) } },
+        dismissButton = { TextButton({ confirm = false }) { Text(Str.KeepIt.t()) } },
     )
+}
+
+/** Language (System, English, العربية) and the digit style; both apply at once. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun LanguageChips(s: FalahState) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf("system" to Str.ThemeSystem.t(), "en" to Str.LangEnglish.t(), "ar" to Str.LangArabic.t()).forEach { (k, v) -> FilterChip(s.langChoice == k, { s.chooseLanguage(k) }, { Text(v) }) }
+    }
+    Text(Str.DigitsTitle.t(), style = MaterialTheme.typography.labelLarge)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(!s.arabicDigits, { s.chooseDigits(false) }, { Text(Str.DigitsWestern.text(Lang.En)) })
+        FilterChip(s.arabicDigits, { s.chooseDigits(true) }, { Text(Str.DigitsArabic.text(Lang.En)) })
+    }
 }

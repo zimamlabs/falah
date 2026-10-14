@@ -1,5 +1,8 @@
 package dev.falah.app
 
+import dev.falah.core.Lang
+import dev.falah.core.Str
+import dev.falah.core.greetingStr
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,17 +55,17 @@ fun HomePage(s: FalahState, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhat
         Header(s)
         Hero(s)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ActionTile(Icons.Rounded.Schedule, "Times", Modifier.weight(1f)) { go(Tab.Times) }
-            ActionTile(Icons.Rounded.Explore, "Qibla", Modifier.weight(1f)) { go(Tab.Qibla) }
-            ActionTile(Icons.Rounded.TouchApp, "Tasbih", Modifier.weight(1f)) { go(Tab.Tasbih) }
-            ActionTile(Icons.Rounded.Settings, "Settings", Modifier.weight(1f)) { go(Tab.Settings) }
+            ActionTile(Icons.Rounded.Schedule, Str.TabTimes.t(), Modifier.weight(1f)) { go(Tab.Times) }
+            ActionTile(Icons.Rounded.Explore, Str.TabQibla.t(), Modifier.weight(1f)) { go(Tab.Qibla) }
+            ActionTile(Icons.Rounded.TouchApp, Str.TabTasbih.t(), Modifier.weight(1f)) { go(Tab.Tasbih) }
+            ActionTile(Icons.Rounded.Settings, Str.TabSettings.t(), Modifier.weight(1f)) { go(Tab.Settings) }
         }
         Timeline(s)
         WeekCard(s)
         QiblaMini(s) { go(Tab.Qibla) }
         DuaCard(s)
         if (!whatsNewHidden) WhatsNewCard(hideWhatsNew)
-        Text("Falah $APP_VERSION  ·  by Zimam  ·  MIT licence", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+        Text(Str.HomeFooter.t(APP_VERSION), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
     }
 }
 
@@ -70,11 +73,11 @@ fun HomePage(s: FalahState, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhat
 private fun Header(s: FalahState) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("${greeting(s.local.hour)}, السلام عليكم", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text(s.placeName, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(Str.HomeGreetLine.t(greetingStr(s.local.hour).t()), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(placeShown(s.placeName), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         }
         val h = s.hijri
-        Text("${s.today.longText()}  ·  ${h.day} ${h.monthName} ${h.year} AH", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(Str.HijriLine.t(s.today.longText(), h.day, h.monthTitle(lang()), h.year), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -85,15 +88,15 @@ private fun Hero(s: FalahState) {
     FalahCard(container = MaterialTheme.colorScheme.primaryContainer, diamond = true, glowing = true) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(if (n.tomorrow) "NEXT PRAYER, TOMORROW" else "NEXT PRAYER", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
-                Text(n.prayer.label, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                Text(n.prayer.arabic, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                Text(PrayerTimes.clock(n.at % 24.0) ?: "--:--", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(if (n.tomorrow) Str.NextPrayerTomorrow.t() else Str.NextPrayerLabel.t(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                Text(n.prayer.shown(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                n.prayer.second()?.let { Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)) }
+                Text(num(PrayerTimes.clock(n.at % 24.0) ?: "--:--"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Ring(n.progress, 124.dp, 10.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f), MaterialTheme.colorScheme.primary) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${left / 60}:${(left % 60).toString().padStart(2, '0')}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text("left", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                    Text(num("${left / 60}:${(left % 60).toString().padStart(2, '0')}"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(Str.TimeLeft.t(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                 }
             }
         }
@@ -103,7 +106,7 @@ private fun Hero(s: FalahState) {
 @Composable
 private fun Timeline(s: FalahState) {
     FalahCard {
-        SectionTitle(Icons.Rounded.Today, "Today", "${loggedPrayers.count { s.prayed(it) }} of 5 prayed")
+        SectionTitle(Icons.Rounded.Today, Str.HomeToday.t(), Str.PrayedOf.t(loggedPrayers.count { s.prayed(it) }))
         Prayer.entries.forEach { p ->
             val t = s.times.of(p)
             val upcoming = !s.next.tomorrow && p == s.next.prayer
@@ -115,13 +118,13 @@ private fun Timeline(s: FalahState) {
                 Box(Modifier.size(10.dp).then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primary, CircleShape) else Modifier.border(2.dp, if (past) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.secondary, CircleShape)))
                 Spacer(Modifier.size(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(p.label, style = MaterialTheme.typography.bodyLarge, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal, color = if (past && !upcoming) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
-                    Text(p.arabic, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(p.shown(), style = MaterialTheme.typography.bodyLarge, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal, color = if (past && !upcoming) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+                    p.second()?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
-                Text(PrayerTimes.clock(t) ?: "--:--", style = MaterialTheme.typography.titleMedium, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal)
+                Text(num(PrayerTimes.clock(t) ?: "--:--"), style = MaterialTheme.typography.titleMedium, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal)
                 if (p == Prayer.Sunrise) Spacer(Modifier.size(48.dp))
                 else IconButton({ s.mark(p, !s.prayed(p)) }) {
-                    Icon(if (s.prayed(p)) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, if (s.prayed(p)) "Prayed" else "Mark as prayed", tint = if (s.prayed(p)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+                    Icon(if (s.prayed(p)) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, if (s.prayed(p)) Str.Prayed.t() else Str.MarkPrayed.t(), tint = if (s.prayed(p)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
                 }
             }
         }
@@ -132,13 +135,13 @@ private fun Timeline(s: FalahState) {
 private fun WeekCard(s: FalahState) {
     val streak = s.log.streak(s.today)
     FalahCard {
-        SectionTitle(Icons.Rounded.LocalFireDepartment, if (streak > 0) "$streak day streak" else "This week", "best ${s.log.bestStreak()}")
+        SectionTitle(Icons.Rounded.LocalFireDepartment, if (streak > 0) Str.DayStreak.t(streak) else Str.ThisWeek.t(), Str.BestStreak.t(s.log.bestStreak()))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             s.log.week(s.today).forEach { (day, count) ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Ring(count / 5f, 36.dp, 4.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.primary) {
                         if (count == 5) Icon(Icons.Rounded.CheckCircle, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                        else Text("$count", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        else Text(num(count), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(day.weekdayLetter(), style = MaterialTheme.typography.labelSmall, fontWeight = if (day == s.today) FontWeight.Bold else FontWeight.Normal, color = if (day == s.today) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -154,8 +157,8 @@ private fun QiblaMini(s: FalahState, open: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("↑", Modifier.rotate(qibla.toFloat()).padding(end = 16.dp), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
             Column(Modifier.weight(1f)) {
-                Text("Qibla", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text("${qibla.toInt()}° from true north", style = MaterialTheme.typography.bodyMedium)
+                Text(Str.TabQibla.t(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(Str.FromNorth.t(qibla.toInt()), style = MaterialTheme.typography.bodyMedium)
             }
             Icon(Icons.Rounded.Explore, null, tint = MaterialTheme.colorScheme.outlineVariant)
         }
@@ -166,19 +169,19 @@ private fun QiblaMini(s: FalahState, open: () -> Unit) {
 private fun DuaCard(s: FalahState) {
     val dua = Duas.of(s.today)
     FalahCard(diamond = true) {
-        SectionTitle(Icons.Rounded.AutoStories, "A reminder for today")
+        SectionTitle(Icons.Rounded.AutoStories, Str.DuaTitle.t())
         Text(dua.arabic, Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
-        Text(dua.english, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-        Text(dua.source, Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        if (lang() == Lang.En) Text(dua.english, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+        Text(if (lang() == Lang.Ar) dua.sourceAr else dua.source, Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
     }
 }
 
 @Composable
 private fun WhatsNewCard(hide: () -> Unit) {
     FalahCard {
-        SectionTitle(Icons.Rounded.NewReleases, "New in $APP_VERSION")
-        ReleaseNotes.forVersion(APP_VERSION).forEach { Text("•  $it", style = MaterialTheme.typography.bodyMedium) }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(hide) { Text("Hide") } }
+        SectionTitle(Icons.Rounded.NewReleases, Str.NewIn.t(APP_VERSION))
+        ReleaseNotes.forVersion(APP_VERSION, lang()).forEach { Text("•  ${num(it)}", style = MaterialTheme.typography.bodyMedium) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(hide) { Text(Str.Hide.t()) } }
     }
 }
 

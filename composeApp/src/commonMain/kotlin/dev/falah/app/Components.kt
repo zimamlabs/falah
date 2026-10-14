@@ -43,7 +43,7 @@ fun Diamond(modifier: Modifier = Modifier, size: Dp = 9.dp) {
 
 /** A soft orange glow behind an area, like the sun behind the dome in the icon. */
 fun Modifier.glow(color: Color, strength: Float = 0.30f): Modifier = drawBehind {
-    drawRect(Brush.radialGradient(listOf(color.copy(alpha = strength), Color.Transparent), center = Offset(size.width * 0.78f, size.height * 0.15f), radius = size.maxDimension * 0.85f))
+    drawRect(Brush.radialGradient(listOf(color.copy(alpha = strength), Color.Transparent), center = Offset(size.width * (if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) 0.22f else 0.78f), size.height * 0.15f), radius = size.maxDimension * 0.85f))
 }
 
 /** The one card look used everywhere: large rounded corners, a hairline border, softly raised, the same padding. */
@@ -105,6 +105,3 @@ fun ActionTile(icon: ImageVector, label: String, modifier: Modifier = Modifier, 
         }
     }
 }
-
-fun hoursAndMinutes(minutes: Int): String = if (minutes >= 60) "${minutes / 60} h ${minutes % 60} min" else "$minutes min"
-

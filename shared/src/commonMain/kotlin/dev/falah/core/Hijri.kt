@@ -6,6 +6,7 @@ import kotlinx.datetime.DateTimeUnit
 
 data class HijriDate(val year: Int, val month: Int, val day: Int) {
     val monthName: String get() = Hijri.monthNames[month - 1]
+    fun monthTitle(lang: Lang): String = if (lang == Lang.Ar) monthArabic else monthName
     val monthArabic: String get() = Hijri.monthNamesArabic[month - 1]
 }
 
