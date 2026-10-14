@@ -56,4 +56,13 @@ class FolderFilesTest {
         val second = MirroredPrefs(MapPrefs(), f) // a fresh install reading the same folder
         assertEquals("Makkah", second.get("place")); assertEquals("1", second.get("tour.done"))
     }
+
+    @Test fun nothingIsEverWrittenOutsideTheTwoFolders() {
+        val f = files(); val prefs = MirroredPrefs(MapPrefs(), f)
+        prefs.set("place", "Makkah"); f.write("prayer-log.csv", "2026-10-14,Fajr\n"); f.write("tasbih.csv", "2026-10-14,tahlil,3\n")
+        allowed = true; f.refresh(); prefs.mirror(); f.write("prayer-log.csv", "2026-10-14,Fajr\n2026-10-14,Dhuhr\n")
+        val stray = fs.listRecursively("/".toPath()).filter { fs.metadata(it).isRegularFile && !it.toString().startsWith(private.toString()) && !it.toString().startsWith(shared.toString()) }.toList()
+        assertEquals(emptyList(), stray)
+        assertTrue(fs.exists(shared / "settings.txt") && fs.exists(shared / "prayer-log.csv") && fs.exists(shared / "tasbih.csv"))
+    }
 }
