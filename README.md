@@ -35,7 +35,7 @@ Prayer times are a calculation, not an authority: check them against your local 
 
 ## Languages
 
-English today. Arabic and right-to-left screens are being added; this line will say when they are in.
+English and Arabic (العربية), with a right-to-left layout. Settings has a Language choice (System, English, العربية) and a digit style (0 1 2 3 or ٠ ١ ٢ ٣); both apply at once. Prayer names, Hijri and Gregorian dates, the duas, the tour, About and the prayer notifications are all in Arabic.
 
 ## Screenshots
 
