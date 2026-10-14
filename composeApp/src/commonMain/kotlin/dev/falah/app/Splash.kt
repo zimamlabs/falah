@@ -17,6 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,11 +47,15 @@ fun Splash(onDone: () -> Unit) {
     }
     Column(Modifier.fillMaxSize().background(Ink), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Canvas(Modifier.size(150.dp)) {
-            val r = size.width * 0.34f * moon.value
-            val c = Offset(size.width * 0.42f, size.height * 0.5f)
-            drawCircle(Cream, r, c)
-            drawCircle(Ink, r * 0.82f, Offset(c.x + r * 0.38f, c.y - r * 0.06f))
-            zimamDot(Offset(size.width * 0.78f, size.height * 0.26f), size.width * 0.2f * pop.value, Orange)
+            val u = size.width / 512f
+            val arch = Path().apply {
+                moveTo(150f * u, 400f * u)
+                lineTo(150f * u, 250f * u)
+                arcTo(Rect(150f * u, 144f * u, 362f * u, 356f * u), 180f, 180f, false)
+                lineTo(362f * u, 400f * u)
+            }
+            drawPath(arch, Cream.copy(alpha = moon.value), style = Stroke(40f * u, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            zimamDot(Offset(256f * u, 238f * u), 76f * u * pop.value, Orange)
         }
         Text("Falah", Modifier.alpha(name.value), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
         Text("by Zimam", Modifier.alpha(name.value), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
