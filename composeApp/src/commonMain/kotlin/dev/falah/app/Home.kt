@@ -82,7 +82,7 @@ private fun Header(s: FalahState) {
 private fun Hero(s: FalahState) {
     val n = s.next
     val left = s.minutesLeft()
-    FalahCard(container = MaterialTheme.colorScheme.primaryContainer) {
+    FalahCard(container = MaterialTheme.colorScheme.primaryContainer, diamond = true, glowing = true) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(if (n.tomorrow) "NEXT PRAYER, TOMORROW" else "NEXT PRAYER", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
@@ -165,7 +165,7 @@ private fun QiblaMini(s: FalahState, open: () -> Unit) {
 @Composable
 private fun DuaCard(s: FalahState) {
     val dua = Duas.of(s.today)
-    FalahCard {
+    FalahCard(diamond = true) {
         SectionTitle(Icons.Rounded.AutoStories, "A reminder for today")
         Text(dua.arabic, Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         Text(dua.english, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)

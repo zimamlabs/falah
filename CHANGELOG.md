@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- **A new look.** Every screen follows the icon: warm near-black or ivory, the Zimam orange as the one accent, a soft glow behind the hero, large rounded cards with a hairline border and the small orange diamond.
+- **An About page** with the mark on a glow, what Falah is, the tour and what's new, a privacy card and links to the repository, releases, issues and licence.
+- **README refreshed** with a banner, badges and a screenshots section.
+
 ## 0.4.0
 
 - **Prayer log history.** A Log page with a month calendar of rings, the month's totals, streaks, and any past day you can open and edit.
