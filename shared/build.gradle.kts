@@ -10,9 +10,11 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.datetime)
+            implementation(libs.okio)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.okio.fakefilesystem)
         }
     }
 }
