@@ -20,6 +20,7 @@ Screenshots will be added here after the first round of phone testing; until the
 
 ## What is in it
 
+- **Languages**: English and Arabic (العربية) with a right-to-left layout; choose the language and the digit style (0 1 2 3 or ٠ ١ ٢ ٣) in Settings, or follow the system.
 - **Home**: a greeting with the Gregorian and Hijri date, the next prayer with a countdown ring, a timeline of the day with a tick for each prayer you pray, a streak and a week strip, a mini qibla card, a daily reminder (a short dua) and quick actions. Times, Qibla and Settings are pages reached from the bottom bar.
 - **Prayer log**: tick the prayers you prayed; the streak and week strip follow. The Log page shows a month calendar of rings, the month's totals, and lets you open and edit any past day. The log is a plain file.
 - **Monthly timetable**: every day of a month with all six times (Times, then Month).

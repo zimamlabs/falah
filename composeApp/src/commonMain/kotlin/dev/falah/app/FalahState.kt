@@ -31,6 +31,8 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     var method by mutableStateOf(Method.Egyptian)
     var asr by mutableStateOf(AsrFactor.Standard)
     var themeMode by mutableStateOf("system")
+    var langChoice by mutableStateOf("system")
+    var arabicDigits by mutableStateOf(false)
     var hijriAdjust by mutableIntStateOf(0)
     var now by mutableStateOf(Clock.System.now())
     var log by mutableStateOf(PrayerLog())
@@ -47,6 +49,8 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
         method = Method.entries.firstOrNull { it.name == prefs.get("method") } ?: Method.Egyptian
         asr = AsrFactor.entries.firstOrNull { it.name == prefs.get("asr") } ?: AsrFactor.Standard
         themeMode = prefs.get("theme") ?: "system"
+        langChoice = prefs.get("lang") ?: "system"
+        arabicDigits = prefs.get("digits") == "ar"
         hijriAdjust = prefs.get("hijri.adjust")?.toIntOrNull() ?: 0
         log = PrayerLog.decode(files.read(LOG_FILE).orEmpty())
         tasbih = TasbihLog.decode(files.read(TASBIH_FILE).orEmpty())
@@ -84,6 +88,8 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     fun chooseMethod(m: Method) { method = m; prefs.set("method", m.name); platform.reschedule() }
     fun chooseAsr(a: AsrFactor) { asr = a; prefs.set("asr", a.name); platform.reschedule() }
     fun chooseTheme(mode: String) { themeMode = mode; prefs.set("theme", mode) }
+    fun chooseLanguage(choice: String) { langChoice = choice; prefs.set("lang", choice) }
+    fun chooseDigits(arabic: Boolean) { arabicDigits = arabic; prefs.set("digits", if (arabic) "ar" else "en") }
     fun chooseHijriAdjust(days: Int) { hijriAdjust = days; prefs.set("hijri.adjust", days.toString()) }
 
     fun notifyOn(p: Prayer): Boolean { notifyTick; return prefs.get("notify.${p.name}") == "1" }

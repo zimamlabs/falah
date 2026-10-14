@@ -1,5 +1,8 @@
 package dev.falah.app
 
+import dev.falah.core.I18n
+import dev.falah.core.Str
+import dev.falah.core.title
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -45,12 +48,16 @@ object PrayerAlarms {
 
     fun notify(context: Context, prayer: Prayer, minutesBefore: Int = 0) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(NotificationChannel(CHANNEL, "Prayer times", NotificationManager.IMPORTANCE_HIGH))
+        val prefs = context.getSharedPreferences("falah", Context.MODE_PRIVATE)
+        val lang = I18n.resolve(prefs.getString("lang", null), java.util.Locale.getDefault().language)
+        val arabicDigits = prefs.getString("digits", null) == "ar"
+        fun t(s: Str, vararg args: Any?) = I18n.digits(s.text(lang, *args), arabicDigits)
+        manager.createNotificationChannel(NotificationChannel(CHANNEL, t(Str.NotifChannel), NotificationManager.IMPORTANCE_HIGH))
         val open = PendingIntent.getActivity(context, 1, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val n = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
-            .setContentTitle("${prayer.label}  ${prayer.arabic}")
-            .setContentText(if (minutesBefore > 0) "${prayer.label} in $minutesBefore min." else "It is time for ${prayer.label}.")
+            .setContentTitle(t(Str.NotifTitle, prayer.label, prayer.arabic))
+            .setContentText(if (minutesBefore > 0) t(Str.NotifBefore, prayer.title(lang), minutesBefore) else t(Str.NotifNow, prayer.title(lang)))
             .setAutoCancel(true).setContentIntent(open).setCategory(NotificationCompat.CATEGORY_REMINDER).build()
         manager.notify(prayer.ordinal, n)
     }

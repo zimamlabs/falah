@@ -1,6 +1,7 @@
 package dev.falah.core
 
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -27,9 +28,12 @@ object Timetable {
 
 object MonthGrid {
     /** The days of a month laid out in weeks (null pads before the 1st and after the last day), weeks starting Monday or Sunday. */
-    fun cells(year: Int, month: Int, weekStartsMonday: Boolean = true): List<LocalDate?> {
+    fun cells(year: Int, month: Int, weekStartsMonday: Boolean = true): List<LocalDate?> = cells(year, month, if (weekStartsMonday) DayOfWeek.MONDAY else DayOfWeek.SUNDAY)
+
+    /** Same, with the week starting on [start] (Saturday is the usual start in most Arabic-speaking countries). */
+    fun cells(year: Int, month: Int, start: DayOfWeek): List<LocalDate?> {
         val first = LocalDate(year, month, 1)
-        val lead = if (weekStartsMonday) first.dayOfWeek.ordinal else (first.dayOfWeek.ordinal + 1) % 7
+        val lead = (first.dayOfWeek.ordinal - start.ordinal + 7) % 7
         val cells = MutableList<LocalDate?>(lead) { null }
         var d = first
         while (d.monthNumber == month) { cells += d; d = d.plus(1, DateTimeUnit.DAY) }

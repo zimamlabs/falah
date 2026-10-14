@@ -27,31 +27,35 @@ object Onboarding {
     }
 }
 
-/** Short notes per version, taken from the changelog; shown once after an update. */
+/** Short notes per version, taken from the changelog; shown once after an update. Each note is English then Arabic. */
 object ReleaseNotes {
-    private val notes: Map<String, List<String>> = mapOf(
+    private val notes: Map<String, List<Pair<String, String>>> = mapOf(
+        "0.5.0" to listOf(
+            "An Arabic interface with a right-to-left layout. Choose the language and the digits in Settings." to "واجهة عربية بتخطيط من اليمين إلى اليسار. اختر اللغة والأرقام من الإعدادات.",
+        ),
         "0.4.1" to listOf(
-            "A new look that follows the icon: warm dark or ivory, orange accent, glow and rounded cards.",
-            "An About page with the tour, what's new, privacy and links.",
+            "A new look that follows the icon: warm dark or ivory, orange accent, glow and rounded cards." to "مظهر جديد يتبع الأيقونة: داكن دافئ أو عاجي، ولمسة برتقالية، وتوهّج، وبطاقات مستديرة.",
+            "An About page with the tour, what's new, privacy and links." to "صفحة «حول» فيها الجولة والجديد والخصوصية والروابط.",
         ),
         "0.4.0" to listOf(
-            "A prayer log with a month calendar, and a monthly timetable.",
-            "A tasbih counter that saves your totals.",
-            "Choose to be notified a few minutes before a prayer, and a live compass for the qibla.",
+            "A prayer log with a month calendar, and a monthly timetable." to "سجل للصلاة بتقويم شهري، وجدول مواقيت شهري.",
+            "A tasbih counter that saves your totals." to "عدّاد تسبيح يحفظ مجاميعك.",
+            "Choose to be notified a few minutes before a prayer, and a live compass for the qibla." to "اختر التنبيه قبل الصلاة بدقائق، وبوصلة مباشرة للقبلة.",
         ),
         "0.3.0" to listOf(
-            "A Home page with the next prayer, today's times and shortcuts.",
-            "A first-run tour, and these notes after each update.",
-            "Settings can live in one Zimam folder (Zimam/Falah). Copies are checked and nothing is ever deleted.",
+            "A Home page with the next prayer, today's times and shortcuts." to "صفحة رئيسية فيها الصلاة القادمة ومواقيت اليوم واختصارات.",
+            "A first-run tour, and these notes after each update." to "جولة تعريفية عند أول تشغيل، وهذه الملاحظات بعد كل تحديث.",
+            "Settings can live in one Zimam folder (Zimam/Falah). Copies are checked and nothing is ever deleted." to "يمكن حفظ الإعدادات في مجلد زمام (Zimam/Falah). تُفحص النسخ ولا يُحذف شيء أبدًا.",
         ),
-        "0.2.2" to listOf("A better opening screen."),
-        "0.2.1" to listOf("A new icon."),
-        "0.2.0" to listOf("A notification at each prayer you pick."),
+        "0.2.2" to listOf("A better opening screen." to "شاشة افتتاحية أفضل."),
+        "0.2.1" to listOf("A new icon." to "أيقونة جديدة."),
+        "0.2.0" to listOf("A notification at each prayer you pick." to "إشعار عند كل صلاة تختارها."),
     )
 
-    /** The notes for [version], or for the newest older version that has some. */
-    fun forVersion(version: String): List<String> =
-        notes[version] ?: notes.keys.filter { Onboarding.compare(it, version) <= 0 }.maxWithOrNull { a, b -> Onboarding.compare(a, b) }?.let { notes[it] }.orEmpty()
+    /** The notes for [version], or for the newest older version that has some, in [lang]. */
+    fun forVersion(version: String, lang: Lang = Lang.En): List<String> =
+        (notes[version] ?: notes.keys.filter { Onboarding.compare(it, version) <= 0 }.maxWithOrNull { a, b -> Onboarding.compare(a, b) }?.let { notes[it] }.orEmpty())
+            .map { if (lang == Lang.Ar) it.second else it.first }
 }
 
 /** The settings mirror kept in the Zimam folder: one `key=value` per line, newline and backslash escaped. */

@@ -1,5 +1,11 @@
 package dev.falah.app
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import dev.falah.core.I18n
+import dev.falah.core.Lang
+import dev.falah.core.Str
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -36,11 +42,11 @@ import dev.falah.core.Welcome
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
-const val APP_VERSION = "0.4.1"
+const val APP_VERSION = "0.5.0"
 
-enum class Tab(val label: String, val icon: ImageVector) {
-    Home("Home", Icons.Rounded.Home), Times("Times", Icons.Rounded.Schedule), Qibla("Qibla", Icons.Rounded.Explore), Tasbih("Tasbih", Icons.Rounded.TouchApp), Log("Log", Icons.Rounded.CalendarMonth),
-    Settings("Settings", Icons.Rounded.Settings), About("About", Icons.Rounded.Settings), // reached from Home and Settings, not shown in the bar
+enum class Tab(val label: Str, val icon: ImageVector) {
+    Home(Str.TabHome, Icons.Rounded.Home), Times(Str.TabTimes, Icons.Rounded.Schedule), Qibla(Str.TabQibla, Icons.Rounded.Explore), Tasbih(Str.TabTasbih, Icons.Rounded.TouchApp), Log(Str.TabLog, Icons.Rounded.CalendarMonth),
+    Settings(Str.TabSettings, Icons.Rounded.Settings), About(Str.TabAbout, Icons.Rounded.Settings), // reached from Home and Settings, not shown in the bar
 }
 
 /** [resumed] changes each time the app comes back to the front, so the data folder can be picked again after the permission screen. */
@@ -54,7 +60,11 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
         }
     }
     LaunchedEffect(Unit) { while (true) { delay(15_000); state.now = Clock.System.now() } }
-    FalahTheme(state.themeMode) {
+    val language = I18n.resolve(state.langChoice, systemLanguage())
+    CompositionLocalProvider(
+        LocalAppLocale provides AppLocale(language, state.arabicDigits),
+        LocalLayoutDirection provides if (language == Lang.Ar) LayoutDirection.Rtl else LayoutDirection.Ltr,
+    ) { FalahTheme(state.themeMode) {
         var splash by remember { mutableStateOf(true) }
         var tab by remember { mutableStateOf(Tab.Home) }
         var welcome by remember {
@@ -70,7 +80,7 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                        Tab.entries.filter { it != Tab.Settings && it != Tab.About }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label) }, label = { Text(t.label) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))) }
+                        Tab.entries.filter { it != Tab.Settings && it != Tab.About }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label.t()) }, label = { Text(t.label.t()) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))) }
                     }
                 },
             ) { inner ->
@@ -88,11 +98,11 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
             }
             if (welcome == Welcome.WhatsNew && !splash) AlertDialog(
                 onDismissRequest = {},
-                title = { Text("What's new in $APP_VERSION") },
-                text = { androidx.compose.foundation.layout.Column { ReleaseNotes.forVersion(APP_VERSION).forEach { Text("•  $it") } } },
-                confirmButton = { TextButton({ prefs.set("seen.version", APP_VERSION); prefs.set("tour.done", "1"); welcome = Welcome.Nothing }) { Text("Close") } },
+                title = { Text(Str.WhatsNewIn.t(APP_VERSION)) },
+                text = { androidx.compose.foundation.layout.Column { ReleaseNotes.forVersion(APP_VERSION, lang()).forEach { Text("•  ${num(it)}") } } },
+                confirmButton = { TextButton({ prefs.set("seen.version", APP_VERSION); prefs.set("tour.done", "1"); welcome = Welcome.Nothing }) { Text(Str.Close.t()) } },
             )
             AnimatedVisibility(splash, exit = fadeOut()) { Splash { splash = false } }
         }
-    }
+    } }
 }

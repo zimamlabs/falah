@@ -18,7 +18,7 @@ interface AppFiles {
     /** Picks the folder again (after the permission changed); true when it changed, so callers reload. */
     fun refresh(): Boolean
     /** Why the last switch was held back, if it was. */
-    val message: String?
+    val message: Pair<String, String>?
     /** The old private folder, when everything in it is verified in the Zimam folder and it can be removed; otherwise null. */
     fun removableOld(): String?
     fun removeOld(): Boolean
@@ -34,7 +34,7 @@ class MemoryFiles : AppFiles {
     override val canAskAccess = false
     override fun askAccess() {}
     override fun refresh() = false
-    override val message: String? = null
+    override val message: Pair<String, String>? = null
     override fun removableOld(): String? = null
     override fun removeOld() = false
 }
@@ -54,7 +54,7 @@ class FolderFiles(
 ) : AppFiles {
     private val migration = FolderMigration(fs)
     private var root: Path = privateRoot
-    override var message: String? = null
+    override var message: Pair<String, String>? = null
         private set
 
     init { refresh() }
@@ -72,7 +72,7 @@ class FolderFiles(
             if (fs.exists(privateRoot) && privateRoot != sharedRoot) {
                 val r = migration.copyAndVerify(privateRoot, sharedRoot, "Private")
                 if (!r.ok) {
-                    message = "Falah could not verify the copy of $privateRoot into $sharedRoot, so it keeps using the old folder and will try again later. Nothing was deleted."
+                    message = privateRoot.toString() to sharedRoot.toString()
                     target = privateRoot
                 }
             }

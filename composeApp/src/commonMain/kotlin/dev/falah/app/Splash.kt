@@ -1,5 +1,6 @@
 package dev.falah.app
 
+import dev.falah.core.Str
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -43,8 +44,8 @@ fun Splash(onDone: () -> Unit) {
     Column(Modifier.fillMaxSize().background(Ink), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         BrandMark(Modifier.size(150.dp).alpha(mark.value).graphicsLayer { val k = 0.86f + 0.14f * mark.value; scaleX = k; scaleY = k })
         Spacer(Modifier.height(32.dp))
-        Text("Falah", Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
+        Text(Str.AppName.t(), Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(4.dp))
-        Text("by Zimam", Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        Text(Str.SplashBy.t(), Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
     }
 }
