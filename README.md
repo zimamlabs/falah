@@ -11,7 +11,6 @@
   <img alt="Android" src="https://img.shields.io/badge/Android-8.0%2B-FF5A1F?labelColor=1A1613">
 </p>
 
-<p align="center"><img src="branding/boards/Falah%20Icon%20Family%20Brand%20Sheet.png" alt="The Falah icon family" width="760"></p>
 
 Falah (فلاح, success) shows today's five prayers and the sunrise for where you are, tells you which prayer is next and how long is left, keeps a log of the prayers you pray, and points to the qibla. It works offline, has no account and sends nothing anywhere.
 
