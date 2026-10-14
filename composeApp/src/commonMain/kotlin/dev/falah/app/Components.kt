@@ -1,6 +1,13 @@
 package dev.falah.app
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,25 +34,48 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** The one card look used everywhere: rounded, softly raised, the same padding. */
+/** The small orange diamond from the icon, used as a quiet signature on cards. */
+@Composable
+fun Diamond(modifier: Modifier = Modifier, size: Dp = 9.dp) {
+    val color = MaterialTheme.colorScheme.primary
+    Canvas(modifier.size(size)) { rotate(45f) { drawRoundRect(color, cornerRadius = CornerRadius(this.size.width * 0.18f)) } }
+}
+
+/** A soft orange glow behind an area, like the sun behind the dome in the icon. */
+fun Modifier.glow(color: Color, strength: Float = 0.30f): Modifier = drawBehind {
+    drawRect(Brush.radialGradient(listOf(color.copy(alpha = strength), Color.Transparent), center = Offset(size.width * 0.78f, size.height * 0.15f), radius = size.maxDimension * 0.85f))
+}
+
+/** The one card look used everywhere: large rounded corners, a hairline border, softly raised, the same padding. */
 @Composable
 fun FalahCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     container: Color = MaterialTheme.colorScheme.surfaceContainer,
+    diamond: Boolean = false,
+    glowing: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = CardDefaults.cardColors(containerColor = container)
-    val elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    val body: @Composable ColumnScope.() -> Unit = { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() } }
-    if (onClick != null) Card(onClick, modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = colors, elevation = elevation, content = body)
-    else Card(modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, colors = colors, elevation = elevation, content = body)
+    val elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    val border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+    val shape = MaterialTheme.shapes.large
+    val body: @Composable ColumnScope.() -> Unit = {
+        Box(if (glowing) Modifier.glow(MaterialTheme.colorScheme.primary) else Modifier) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
+            if (diamond) Diamond(Modifier.align(Alignment.TopEnd).padding(14.dp))
+        }
+    }
+    if (onClick != null) Card(onClick, modifier.fillMaxWidth(), shape = shape, colors = colors, elevation = elevation, border = border, content = body)
+    else Card(modifier.fillMaxWidth(), shape = shape, colors = colors, elevation = elevation, border = border, content = body)
 }
 
 @Composable
 fun SectionTitle(icon: ImageVector, text: String, trailing: String? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+        Box(Modifier.size(30.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f), CircleShape), contentAlignment = Alignment.Center) {
+            Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+        }
         Text(text, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         trailing?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }

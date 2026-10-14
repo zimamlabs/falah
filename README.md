@@ -4,7 +4,20 @@
 
 <p align="center">Prayer times, reminders and the qibla, by <a href="https://github.com/zimamlabs">Zimam</a>.</p>
 
-Falah (فلاح, success) shows today's five prayers and the sunrise for where you are, tells you which prayer is next and how long is left, and points to the qibla. It works offline, has no account and sends nothing anywhere.
+<p align="center">
+  <a href="../../releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/zimamlabs/falah?color=FF5A1F&labelColor=1A1613"></a>
+  <a href="../../releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/zimamlabs/falah/total?color=FF5A1F&labelColor=1A1613"></a>
+  <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-FF5A1F?labelColor=1A1613"></a>
+  <img alt="Android" src="https://img.shields.io/badge/Android-8.0%2B-FF5A1F?labelColor=1A1613">
+</p>
+
+<p align="center"><img src="branding/boards/Falah%20Icon%20Family%20Brand%20Sheet.png" alt="The Falah icon family" width="760"></p>
+
+Falah (فلاح, success) shows today's five prayers and the sunrise for where you are, tells you which prayer is next and how long is left, keeps a log of the prayers you pray, and points to the qibla. It works offline, has no account and sends nothing anywhere.
+
+## Screenshots
+
+Screenshots will be added here after the first round of phone testing; until then the board above shows the look.
 
 ## What is in it
 
@@ -24,8 +37,9 @@ Falah (فلاح, success) shows today's five prayers and the sunrise for where y
 
 Prayer times are a calculation, not an authority: check them against your local mosque or religious authority when it matters.
 
-## Your data
+## Your data and privacy
 
+No account, no tracking, no network use at all. 
 Settings and the prayer log are plain files (`settings.txt`, `prayer-log.csv`). With *All files access* they live in a visible `Zimam/Falah` folder on the phone, which survives reinstalling the app; without it they stay inside the app. When the folder changes, everything is copied and checked (file count, size, SHA-256) and the old folder is kept as a backup; nothing is deleted unless you remove it from Settings after a fresh check.
 
 ## Download

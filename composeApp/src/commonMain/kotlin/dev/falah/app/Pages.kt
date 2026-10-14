@@ -103,7 +103,7 @@ fun QiblaPage(s: FalahState) = Page {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsPage(s: FalahState, showTour: () -> Unit) = Page {
+fun SettingsPage(s: FalahState, openAbout: () -> Unit) = Page {
     Text("Settings", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
     FalahCard {
         SectionTitle(Icons.Rounded.Place, "Place")
@@ -131,16 +131,9 @@ fun SettingsPage(s: FalahState, showTour: () -> Unit) = Page {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v) }) } }
     }
     DataCard(s)
-    FalahCard {
-        SectionTitle(Icons.Rounded.Info, "About")
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            BrandMark(Modifier.size(56.dp))
-            Column {
-                Text("Falah $APP_VERSION", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text("by Zimam  ·  MIT licence", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        TextButton(showTour) { Text("Show the tour again") }
+    FalahCard(onClick = openAbout) {
+        SectionTitle(Icons.Rounded.Info, "About Falah", "version $APP_VERSION")
+        Text("The tour, what's new, privacy and links.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

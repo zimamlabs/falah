@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,11 +36,11 @@ import dev.falah.core.Welcome
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
-const val APP_VERSION = "0.4.0"
+const val APP_VERSION = "0.4.1"
 
 enum class Tab(val label: String, val icon: ImageVector) {
     Home("Home", Icons.Rounded.Home), Times("Times", Icons.Rounded.Schedule), Qibla("Qibla", Icons.Rounded.Explore), Tasbih("Tasbih", Icons.Rounded.TouchApp), Log("Log", Icons.Rounded.CalendarMonth),
-    Settings("Settings", Icons.Rounded.Settings), // reached from Home, not shown in the bar
+    Settings("Settings", Icons.Rounded.Settings), About("About", Icons.Rounded.Settings), // reached from Home and Settings, not shown in the bar
 }
 
 /** [resumed] changes each time the app comes back to the front, so the data folder can be picked again after the permission screen. */
@@ -62,14 +63,14 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
         var tourAgain by remember { mutableStateOf(false) }
         var hiddenNotes by remember { mutableStateOf(prefs.get("notes.hidden") == APP_VERSION) }
         fun finishTour() { prefs.set("tour.done", "1"); prefs.set("seen.version", APP_VERSION); welcome = Welcome.Nothing; tourAgain = false }
-        PlatformBackHandler(enabled = tab != Tab.Home && !tourAgain) { tab = Tab.Home }
+        PlatformBackHandler(enabled = tab != Tab.Home && !tourAgain) { tab = if (tab == Tab.About) Tab.Settings else Tab.Home }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             if (welcome == Welcome.Tour || tourAgain) Tour(state, ::finishTour)
             else Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                        Tab.entries.filter { it != Tab.Settings }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label) }, label = { Text(t.label) }) }
+                        Tab.entries.filter { it != Tab.Settings && it != Tab.About }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label) }, label = { Text(t.label) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))) }
                     }
                 },
             ) { inner ->
@@ -80,7 +81,8 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
                         Tab.Qibla -> CompassPage(state, resumed)
                         Tab.Tasbih -> TasbihPage(state)
                         Tab.Log -> LogPage(state)
-                        Tab.Settings -> SettingsPage(state) { tourAgain = true }
+                        Tab.Settings -> SettingsPage(state) { tab = Tab.About }
+                        Tab.About -> AboutPage(state) { tourAgain = true }
                     }
                 }
             }
