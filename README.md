@@ -24,7 +24,7 @@ Android today, Linux later. Falah (فلاح, success) shows today's five prayers
 - **Reminder offsets**: be notified at the prayer or 5, 10, 15 or 30 minutes before it, for each prayer.
 - **Live qibla compass**: on phones with a compass sensor the dial follows the phone, tells you how far to turn, and says when you face the qibla; without a sensor it shows the bearing from north.
 - **First-run tour** and a one-time **What's new** note after each update.
-- **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, accurate to about a minute.
+- **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, within about 2 minutes of an independent cross-check (see `ReferenceTimesTest`).
 - **Next prayer** and the time left, updated as the day goes.
 - **Notifications** at the prayers you pick, set again after a restart.
 - **Qibla** direction from where you are.

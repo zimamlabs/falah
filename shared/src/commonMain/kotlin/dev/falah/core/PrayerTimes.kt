@@ -37,7 +37,7 @@ object PrayerTimes {
 
     /**
      * Times for [date] at [latitude], [longitude] (degrees, east positive) in a zone [utcOffsetHours] ahead of UTC (daylight saving included).
-     * Uses the sun's position from the standard low-precision astronomical formulas, accurate to about a minute.
+     * Uses the sun's position from the standard low-precision astronomical formulas, within about 2 minutes of an independent cross-check (ReferenceTimesTest).
      */
     fun compute(date: LocalDate, latitude: Double, longitude: Double, utcOffsetHours: Double, method: Method = Method.Egyptian, asr: AsrFactor = AsrFactor.Standard): DayTimes {
         val jd = julianDay(date) - longitude / (15 * 24)
