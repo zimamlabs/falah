@@ -1,6 +1,7 @@
 package dev.falah.app
 
 import dev.falah.core.Str
+import dev.falah.core.ThemeMode
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -69,7 +70,7 @@ fun Tour(s: FalahState, onDone: () -> Unit) {
                         Text(Str.TourDataTitle.t(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                         Text(Str.TourDataBody.t(), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
                         if (s.files.canAskAccess) OutlinedButton({ s.files.askAccess() }) { Text(Str.AllowAccess.t()) }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v.t()) }) } }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(ThemeMode.System to Str.ThemeSystem, ThemeMode.Light to Str.ThemeLight, ThemeMode.Dark to Str.ThemeDark).forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v.t()) }) } }
                         LanguageChips(s)
                     }
                 }

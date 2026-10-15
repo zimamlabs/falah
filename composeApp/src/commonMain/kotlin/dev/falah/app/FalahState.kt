@@ -5,7 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dev.falah.core.AppSettings
 import dev.falah.core.AsrFactor
+import dev.falah.core.ThemeMode
 import dev.falah.core.DayTimes
 import dev.falah.core.Hijri
 import dev.falah.core.Method
@@ -26,18 +28,21 @@ import kotlinx.datetime.toLocalDateTime
 data class NextPrayer(val prayer: Prayer, val at: Double, val tomorrow: Boolean, val progress: Float)
 
 class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) {
-    var placeName by mutableStateOf("Cairo")
-    var lat by mutableStateOf(30.0444)
-    var lon by mutableStateOf(31.2357)
-    var method by mutableStateOf(Method.Egyptian)
-    var asr by mutableStateOf(AsrFactor.Standard)
-    var themeMode by mutableStateOf("system")
-    var langChoice by mutableStateOf("system")
-    var arabicDigits by mutableStateOf(false)
-    var hijriAdjust by mutableIntStateOf(0)
+    /** Every setting, read through [SettingsRepository] and changed only with [update]. */
+    var settings by mutableStateOf(AppSettings())
+        private set
+    private val repository = SettingsRepository(prefs)
+    val placeName get() = settings.placeName
+    val lat get() = settings.latitude
+    val lon get() = settings.longitude
+    val method get() = settings.method
+    val asr get() = settings.asr
+    val themeMode get() = settings.theme
+    val langChoice get() = settings.language
+    val arabicDigits get() = settings.arabicDigits
+    val hijriAdjust get() = settings.hijriAdjust
     var now by mutableStateOf(Clock.System.now())
     var log by mutableStateOf(PrayerLog())
-    var notifyTick by mutableIntStateOf(0)
     var tasbih by mutableStateOf(TasbihLog())
 
     /** Data files that exist but could not be read; they are never written over. */
@@ -64,15 +69,7 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
 
     /** Reads everything again from the saved values and files (at start, and after the data folder changed). */
     fun reload() {
-        placeName = prefs.get("place") ?: "Cairo"
-        lat = prefs.get("lat")?.toDoubleOrNull() ?: 30.0444
-        lon = prefs.get("lon")?.toDoubleOrNull() ?: 31.2357
-        method = Method.entries.firstOrNull { it.name == prefs.get("method") } ?: Method.Egyptian
-        asr = AsrFactor.entries.firstOrNull { it.name == prefs.get("asr") } ?: AsrFactor.Standard
-        themeMode = prefs.get("theme") ?: "system"
-        langChoice = prefs.get("lang") ?: "system"
-        arabicDigits = prefs.get("digits") == "ar"
-        hijriAdjust = prefs.get("hijri.adjust")?.toIntOrNull() ?: 0
+        settings = repository.load()
         unreadable = emptySet(); saveFailed = false
         log = PrayerLog.decode(loadData(LOG_FILE))
         tasbih = TasbihLog.decode(loadData(TASBIH_FILE))
@@ -103,28 +100,31 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
 
     fun minutesLeft(): Int = ((next.at - hourNow) * 60).toInt().coerceAtLeast(0)
 
-    private var placePicked by mutableStateOf(false)
-
-    fun choosePlace(p: Place) {
-        placePicked = true
-        placeName = p.name; lat = p.latitude; lon = p.longitude
-        prefs.set("place", p.name); prefs.set("lat", p.latitude.toString()); prefs.set("lon", p.longitude.toString()); platform.reschedule()
+    /** Changes settings and saves only what differs. Alarms are set again when anything they depend on changed. */
+    fun update(change: AppSettings.() -> AppSettings) {
+        val old = settings; val new = old.change()
+        if (new == old) return
+        settings = new; repository.save(old, new)
+        if (new.alarmInputs() != old.alarmInputs()) platform.reschedule()
     }
-    /** True once the user picked or typed a place; until then the Cairo default is shown with a notice. */
-    val placeChosen: Boolean get() = prefs.get("place") != null || placePicked
 
+    private fun AppSettings.alarmInputs() = listOf(latitude, longitude, method, asr, notify, offsets)
+
+    val placeChosen: Boolean get() = settings.placeChosen
+
+    fun choosePlace(p: Place) = update { copy(placeName = p.name, latitude = p.latitude, longitude = p.longitude, placeChosen = true) }
     fun chooseCustomPlace(name: String, latitude: Double, longitude: Double) = choosePlace(Place(name.trim().ifEmpty { Str.CustomPlaceDefaultName.en }, latitude, longitude))
-    fun chooseMethod(m: Method) { method = m; prefs.set("method", m.name); platform.reschedule() }
-    fun chooseAsr(a: AsrFactor) { asr = a; prefs.set("asr", a.name); platform.reschedule() }
-    fun chooseTheme(mode: String) { themeMode = mode; prefs.set("theme", mode) }
-    fun chooseLanguage(choice: String) { langChoice = choice; prefs.set("lang", choice) }
-    fun chooseDigits(arabic: Boolean) { arabicDigits = arabic; prefs.set("digits", if (arabic) "ar" else "en") }
-    fun chooseHijriAdjust(days: Int) { hijriAdjust = days; prefs.set("hijri.adjust", days.toString()) }
+    fun chooseMethod(m: Method) = update { copy(method = m) }
+    fun chooseAsr(a: AsrFactor) = update { copy(asr = a) }
+    fun chooseTheme(mode: ThemeMode) = update { copy(theme = mode) }
+    fun chooseLanguage(choice: String) = update { copy(language = choice) }
+    fun chooseDigits(arabic: Boolean) = update { copy(arabicDigits = arabic) }
+    fun chooseHijriAdjust(days: Int) = update { copy(hijriAdjust = days) }
 
-    fun notifyOn(p: Prayer): Boolean { notifyTick; return prefs.get("notify.${p.name}") == "1" }
+    fun notifyOn(p: Prayer): Boolean = p in settings.notify
     fun setNotify(p: Prayer, on: Boolean) {
-        if (on) platform.ensureNotifications { ok -> if (ok) { prefs.set("notify.${p.name}", "1"); platform.reschedule(); notifyTick++ } }
-        else { prefs.set("notify.${p.name}", "0"); platform.reschedule(); notifyTick++ }
+        if (on) platform.ensureNotifications { ok -> if (ok) update { copy(notify = notify + p) } }
+        else update { copy(notify = notify - p) }
     }
 
     fun prayed(p: Prayer): Boolean = p in log.done(today)
@@ -140,8 +140,8 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     }
 
     /** Minutes before the prayer the notification fires; 0 is at the prayer. */
-    fun offsetOf(p: Prayer): Int { notifyTick; return prefs.get("offset.${p.name}")?.toIntOrNull() ?: 0 }
-    fun setOffset(p: Prayer, minutes: Int) { prefs.set("offset.${p.name}", minutes.toString()); platform.reschedule(); notifyTick++ }
+    fun offsetOf(p: Prayer): Int = settings.offsetOf(p)
+    fun setOffset(p: Prayer, minutes: Int) = update { copy(offsets = offsets + (p to minutes)) }
 
     companion object { const val LOG_FILE = "prayer-log.csv"
         const val TASBIH_FILE = "tasbih.csv" }

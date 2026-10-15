@@ -1,6 +1,7 @@
 package dev.falah.app
 
 import dev.falah.core.Str
+import dev.falah.core.ThemeMode
 import dev.falah.core.Lang
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.foundation.layout.Arrangement
@@ -160,7 +161,7 @@ fun SettingsPage(s: FalahState, openAbout: () -> Unit) = Page {
     }
     FalahCard {
         SectionTitle(Icons.Rounded.Palette, Str.Appearance.t())
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v.t()) }) } }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(ThemeMode.System to Str.ThemeSystem, ThemeMode.Light to Str.ThemeLight, ThemeMode.Dark to Str.ThemeDark).forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v.t()) }) } }
     }
     FalahCard {
         SectionTitle(Icons.Rounded.Translate, Str.LanguageTitle.t())

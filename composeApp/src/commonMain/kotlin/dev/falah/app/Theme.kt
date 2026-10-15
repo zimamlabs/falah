@@ -9,6 +9,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dev.falah.core.ThemeMode
 
 private val Light = lightColorScheme(
     primary = Color(0xFFFF5A1F), onPrimary = Color(0xFF1A0A02), primaryContainer = Color(0xFFFFE3D6), onPrimaryContainer = Color(0xFF3A1200),
@@ -22,8 +23,8 @@ private val Dark = darkColorScheme(
 )
 
 @Composable
-fun FalahTheme(mode: String = "system", content: @Composable () -> Unit) {
-    val dark = when (mode) { "dark" -> true; "light" -> false; else -> isSystemInDarkTheme() }
+fun FalahTheme(mode: ThemeMode = ThemeMode.System, content: @Composable () -> Unit) {
+    val dark = when (mode) { ThemeMode.Dark -> true; ThemeMode.Light -> false; ThemeMode.System -> isSystemInDarkTheme() }
     MaterialTheme(
         colorScheme = if (dark) Dark else Light,
         shapes = Shapes(small = RoundedCornerShape(14.dp), medium = RoundedCornerShape(22.dp), large = RoundedCornerShape(28.dp)),
