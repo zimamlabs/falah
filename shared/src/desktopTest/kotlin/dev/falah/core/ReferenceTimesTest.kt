@@ -53,5 +53,6 @@ class ReferenceTimesTest {
         assertTrue(london.minutes[Prayer.Fajr] == null && t.fajr == null && t.isha == null)
     }
 
-    private companion object { const val TOLERANCE_MINUTES = 2.5 // measured worst case 2.09 (Isha, London 2026-09-23); tighten when the algorithm improves }
+    // Measured worst case 2.09 (Isha, London 2026-09-23); tighten when the algorithm improves.
+    private companion object { const val TOLERANCE_MINUTES = 2.5 }
 }
