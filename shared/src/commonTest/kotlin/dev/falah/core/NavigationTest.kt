@@ -5,6 +5,8 @@ import kotlin.test.assertEquals
 
 class NavigationTest {
     @Test fun backClosesTheMenuFirst() = assertEquals(BackAction.CloseDrawer, Navigation.back(true, true, Section.Log))
+    @Test fun aSettingsPageGoesBackToTheSettingsList() = assertEquals(BackAction.LeaveSettingsSection, Navigation.back(false, true, Section.Log, inSettingsSection = true))
+    @Test fun theMenuStillComesBeforeASettingsPage() = assertEquals(BackAction.CloseDrawer, Navigation.back(true, true, Section.Log, inSettingsSection = true))
     @Test fun thenLeavesSettingsOrAbout() = assertEquals(BackAction.LeaveSubScreen, Navigation.back(false, true, Section.Log))
     @Test fun thenReturnsToHome() = assertEquals(BackAction.GoHome, Navigation.back(false, false, Section.Tasbih))
     @Test fun thenExits() = assertEquals(BackAction.Exit, Navigation.back(false, false, Section.Home))

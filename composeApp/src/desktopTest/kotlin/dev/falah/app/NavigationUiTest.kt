@@ -12,6 +12,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.isSelected
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -63,6 +64,28 @@ class NavigationUiTest {
     @Test fun theStartSectionIsHonoured() = runComposeUiTest {
         setContent { FalahApp(prefs("start" to "tasbih"), files = MemoryFiles(), showSplash = false) }
         selectedTab("Tasbih")
+    }
+
+    private val tab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+
+    @Test fun theMenuFollowsTheSharedSpecOrder() = runComposeUiTest {
+        setContent { FalahApp(prefs(), files = MemoryFiles(), showSplash = false) }
+        onNodeWithContentDescription("Open menu").performClick(); waitForIdle()
+        fun top(text: String) = onNode(hasText(text) and tab and hasAnyAncestor(hasTestTag(BOTTOM_BAR_TAG)).not()).fetchSemanticsNode().boundsInRoot.top
+        val order = listOf("Home", "Times", "Qibla", "Tasbih", "Log", "Settings", "What's new", "Show the tour again", "About").map { top(it) }
+        check(order == order.sorted()) { "menu order was $order" }
+        onNodeWithText("by Zimam Labs").assertExists(); onNodeWithText("Zimam Labs").assertExists()
+    }
+
+    @Test fun settingsIsAListOfLabelledSectionsInTheSharedOrder() = runComposeUiTest {
+        setContent { FalahApp(prefs(), files = MemoryFiles(), showSplash = false) }
+        onNodeWithContentDescription("Open menu").performClick(); waitForIdle()
+        onNode(hasText("Settings") and tab and hasAnyAncestor(hasTestTag(BOTTOM_BAR_TAG)).not()).performClick(); waitForIdle()
+        fun top(text: String) = onNode(hasText(text)).fetchSemanticsNode().boundsInRoot.top
+        val order = listOf("Appearance", "Sections and layout", "Language", "Notifications and reminders", "Calculation", "Your data", "Privacy and security", "About Falah").map { top(it) }
+        check(order == order.sorted()) { "settings order was $order" }
+        onNodeWithText("Appearance").performClick(); waitForIdle()
+        onNodeWithText("Colour theme").assertExists()
     }
 
     private fun androidx.compose.ui.test.ComposeUiTest.selectedTab(name: String) { onNode(isSelected() and hasText(name) and hasAnyAncestor(hasTestTag(BOTTOM_BAR_TAG))).assertExists("$name should be the selected tab") }

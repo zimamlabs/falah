@@ -1,11 +1,15 @@
 package dev.falah.core
 
 /** What the back button or gesture does, in order: close the menu, leave Settings or About, return to Home, then leave the app. */
-enum class BackAction { CloseDrawer, LeaveSubScreen, GoHome, Exit }
+enum class BackAction { CloseDrawer, LeaveSettingsSection, LeaveSubScreen, GoHome, Exit }
+
+/** The pages of Settings, as a list of labelled rows. */
+enum class SettingsSection { Appearance, Layout, Language, Notifications, Calculation, Data, Privacy }
 
 object Navigation {
-    fun back(drawerOpen: Boolean, inSubScreen: Boolean, current: Section): BackAction = when {
+    fun back(drawerOpen: Boolean, inSubScreen: Boolean, current: Section, inSettingsSection: Boolean = false): BackAction = when {
         drawerOpen -> BackAction.CloseDrawer
+        inSettingsSection -> BackAction.LeaveSettingsSection
         inSubScreen -> BackAction.LeaveSubScreen
         current != Section.Home -> BackAction.GoHome
         else -> BackAction.Exit
