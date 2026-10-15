@@ -142,6 +142,13 @@ private fun LayoutControls(s: FalahState) {
             Switch(on, { s.showSection(sec, it) }, enabled = sec != Section.Home)
         }
     }
+    Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = LocalSpacing.current.rowMinHeight), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(Str.PrayerScreensOption.t(), style = MaterialTheme.typography.bodyLarge)
+            Text(Str.PrayerScreensNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(s.settings.prayerScreens, { s.choosePrayerScreens(it) })
+    }
     Text(Str.StartScreen.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { shown.forEach { sec -> FilterChip(s.settings.startSection == sec, { s.chooseStart(sec) }, { Text(Tab.of(sec).label.t()) }) } }
 }

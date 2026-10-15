@@ -24,6 +24,18 @@ data class PrayerLog(val days: Map<LocalDate, Set<Prayer>> = emptyMap()) {
     fun week(today: LocalDate, length: Int = 7): List<Pair<LocalDate, Int>> =
         (length - 1 downTo 0).map { back -> today.minus(back, DateTimeUnit.DAY).let { it to count(it) } }
 
+    /** The last [length] days ending on [today], newest first, with whether [prayer] was prayed on each. */
+    fun history(prayer: Prayer, today: LocalDate, length: Int = 30): List<Pair<LocalDate, Boolean>> =
+        (0 until length).map { back -> today.minus(back, DateTimeUnit.DAY).let { it to (prayer in done(it)) } }
+
+    /** Days in a row, ending today if prayed today, otherwise yesterday, on which [prayer] was prayed. */
+    fun streakOf(prayer: Prayer, today: LocalDate): Int {
+        var day = if (prayer in done(today)) today else today.minus(1, DateTimeUnit.DAY)
+        var n = 0
+        while (prayer in done(day)) { n++; day = day.minus(1, DateTimeUnit.DAY) }
+        return n
+    }
+
     /** Days in a row with all five prayed, ending today if today is complete, otherwise yesterday (today is still open). */
     fun streak(today: LocalDate): Int {
         var day = if (isFull(today)) today else today.minus(1, DateTimeUnit.DAY)

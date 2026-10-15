@@ -48,6 +48,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +81,7 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var sub by remember { mutableStateOf<Tab?>(null) }
+    var prayerOpen by remember { mutableStateOf<dev.falah.core.Prayer?>(null) }
     var settingsPage by remember { mutableStateOf<SettingsSection?>(null) }
 
     // Keep the same section on screen when the user shows or hides sections in Settings.
@@ -90,20 +92,20 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
 
     val current = sections.getOrElse(pager.currentPage) { Section.Home }
     fun goTo(section: Section) {
-        sub = null
+        sub = null; prayerOpen = null
         scope.launch {
             drawer.close()
             val page = sections.indexOf(section)
             if (page >= 0) { if (reduceMotion) pager.scrollToPage(page) else pager.animateScrollToPage(page) }
         }
     }
-    fun open(tab: Tab) { tab.section?.let(::goTo) ?: run { sub = tab; if (tab == Tab.Settings) settingsPage = null; scope.launch { drawer.close() } } }
+    fun open(tab: Tab) { tab.section?.let(::goTo) ?: run { sub = tab; prayerOpen = null; if (tab == Tab.Settings) settingsPage = null; scope.launch { drawer.close() } } }
 
-    PlatformBackHandler(enabled = drawer.isOpen || sub != null || current != Section.Home) {
-        when (Navigation.back(drawer.isOpen, sub != null, current, inSettingsSection = sub == Tab.Settings && settingsPage != null)) {
+    PlatformBackHandler(enabled = drawer.isOpen || sub != null || prayerOpen != null || current != Section.Home) {
+        when (Navigation.back(drawer.isOpen, sub != null || prayerOpen != null, current, inSettingsSection = sub == Tab.Settings && settingsPage != null)) {
             BackAction.CloseDrawer -> scope.launch { drawer.close() }
             BackAction.LeaveSettingsSection -> settingsPage = null
-            BackAction.LeaveSubScreen -> sub = if (sub == Tab.About) Tab.Settings else null
+            BackAction.LeaveSubScreen -> if (prayerOpen != null) prayerOpen = null else sub = if (sub == Tab.About) Tab.Settings else null
             BackAction.GoHome -> goTo(Section.Home)
             BackAction.Exit -> Unit
         }
@@ -117,12 +119,12 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
     ) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            topBar = { TopBar(if (sub == Tab.Settings) settingsPage?.title() ?: Str.TabSettings else sub?.label ?: Tab.of(current).label, { scope.launch { drawer.open() } }) },
+            topBar = { TopBar(if (prayerOpen != null) null else if (sub == Tab.Settings) settingsPage?.title() ?: Str.TabSettings else sub?.label ?: Tab.of(current).label, { scope.launch { drawer.open() } }) },
             bottomBar = {
                 NavigationBar(Modifier.testTag(BOTTOM_BAR_TAG), containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                     sections.forEach { sec ->
                         val t = Tab.of(sec)
-                        NavigationBarItem(sub == null && current == sec, { goTo(sec) }, { Icon(t.icon, null) }, label = { Text(t.label.t(), maxLines = 1) },
+                        NavigationBarItem(sub == null && prayerOpen == null && current == sec, { goTo(sec) }, { Icon(t.icon, null) }, label = { Text(t.label.t(), maxLines = 1) },
                             colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)))
                     }
                 }
@@ -132,12 +134,14 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
                 if (state.unreadable.isNotEmpty() || state.saveFailed) StorageBanner(state)
                 Box(Modifier.weight(1f)) {
                     if (sub == null && pager.currentPage == 0) DrawerEdge { scope.launch { drawer.open() } }
-                    when (sub) {
+                    CompositionLocalProvider(LocalPrayerOpener provides if (state.settings.prayerScreens) { p -> prayerOpen = p } else null) {
+                    when (if (prayerOpen != null) null else sub) {
                         Tab.Settings -> SettingsPage(state, settingsPage, { settingsPage = it }) { sub = Tab.About }
                         Tab.About -> AboutPage(state, showTour)
-                        else -> HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 1, key = { sections[it].key }) { page ->
+                        else -> if (prayerOpen != null) PrayerScreen(state, prayerOpen!!) else HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 1, key = { sections[it].key }) { page ->
                             SectionPage(sections[page], state, resumed, active = page == pager.currentPage, hiddenNotes, hideNotes, sections, ::open)
                         }
+                    }
                     }
                 }
             }
@@ -157,10 +161,10 @@ private fun SectionPage(section: Section, state: FalahState, resumed: Int, activ
 }
 
 @Composable
-private fun TopBar(title: Str, openMenu: () -> Unit) {
+private fun TopBar(title: Str?, openMenu: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(openMenu, Modifier.size(48.dp)) { Icon(Icons.Rounded.Menu, Str.MenuOpen.t()) }
-        Text(title.t(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        title?.let { Text(it.t(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 

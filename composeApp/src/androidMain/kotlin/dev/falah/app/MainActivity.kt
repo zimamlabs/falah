@@ -29,6 +29,14 @@ import okio.Path.Companion.toPath
 class MainActivity : ComponentActivity() {
     private var pending: ((Boolean) -> Unit)? = null
     private var resumed by mutableIntStateOf(0)
+    private var soundDone: ((String) -> Unit)? = null
+    private val soundPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val uri = result.data?.let { if (Build.VERSION.SDK_INT >= 33) it.getParcelableExtra(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java) else @Suppress("DEPRECATION") it.getParcelableExtra(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI) }
+            soundDone?.invoke(uri?.toString() ?: dev.falah.core.Sounds.SILENT)
+        }
+        soundDone = null
+    }
     private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> pending?.invoke(granted); pending = null }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +64,16 @@ class MainActivity : ComponentActivity() {
                 else { pending = done; permission.launch(Manifest.permission.POST_NOTIFICATIONS) }
             }
             override fun reschedule() = PrayerAlarms.schedule(this@MainActivity)
+            override val canPickSound = true
+            override fun pickSound(current: String, done: (String) -> Unit) {
+                soundDone = done
+                val existing = current.takeIf { it.startsWith("content://") || it.startsWith("file://") }?.let(Uri::parse)
+                soundPicker.launch(Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_NOTIFICATION or android.media.RingtoneManager.TYPE_ALARM)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existing)
+                    .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true))
+            }
+            override fun soundTitle(value: String): String? = runCatching { android.media.RingtoneManager.getRingtone(this@MainActivity, Uri.parse(value)).getTitle(this@MainActivity) }.getOrNull()
             private var listener: SensorEventListener? = null
             private val sensors get() = getSystemService(Context.SENSOR_SERVICE) as SensorManager
             override val hasCompass: Boolean get() = sensors.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null
