@@ -35,7 +35,7 @@ private const val REPO = "https://github.com/zimamlabs/falah"
 @Composable
 fun AboutPage(s: FalahState, showTour: () -> Unit) {
     val links = LocalUriHandler.current
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         FalahCard(glowing = true, diamond = true) {
             Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 BrandMark(Modifier.size(112.dp))

@@ -58,7 +58,8 @@ import androidx.compose.foundation.layout.FlowRow
 
 @Composable
 private fun Page(content: @Composable () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { content() }
+    val sp = LocalSpacing.current
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = sp.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(sp.cardGap)) { content() }
 }
 
 @Composable
@@ -161,7 +162,7 @@ fun SettingsPage(s: FalahState, openAbout: () -> Unit) = Page {
     }
     FalahCard {
         SectionTitle(Icons.Rounded.Palette, Str.Appearance.t())
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(ThemeMode.System to Str.ThemeSystem, ThemeMode.Light to Str.ThemeLight, ThemeMode.Dark to Str.ThemeDark).forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v.t()) }) } }
+        AppearanceControls(s)
     }
     FalahCard {
         SectionTitle(Icons.Rounded.Translate, Str.LanguageTitle.t())

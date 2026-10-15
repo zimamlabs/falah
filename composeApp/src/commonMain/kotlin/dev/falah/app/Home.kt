@@ -51,10 +51,11 @@ import dev.falah.core.of
 
 @Composable
 fun HomePage(s: FalahState, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhatsNew: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         Header(s)
         Hero(s)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Four across normally, two by two once text is large so labels never break inside a word.
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.15f) 2 else 4) {
             ActionTile(Icons.Rounded.Schedule, Str.TabTimes.t(), Modifier.weight(1f)) { go(Tab.Times) }
             ActionTile(Icons.Rounded.Explore, Str.TabQibla.t(), Modifier.weight(1f)) { go(Tab.Qibla) }
             ActionTile(Icons.Rounded.TouchApp, Str.TabTasbih.t(), Modifier.weight(1f)) { go(Tab.Tasbih) }

@@ -8,7 +8,10 @@ import dev.falah.core.Method
 import dev.falah.core.AsrFactor
 import dev.falah.core.Dhikr
 import dev.falah.core.Prayer
+import dev.falah.core.Accent
+import dev.falah.core.Density
 import dev.falah.core.Str
+import dev.falah.core.TextSize
 import dev.falah.core.title
 
 /** The language and digits the screens use right now. */
@@ -41,3 +44,7 @@ expect fun systemLanguage(): String
 @Composable fun Dhikr.shown(): String = title(lang())
 @Composable fun Place.shown(): String = if (lang() == Lang.Ar) arabic else name
 @Composable fun placeShown(name: String): String = Places.firstOrNull { it.name == name }?.shown() ?: name
+
+fun Accent.label() = when (this) { Accent.Orange -> Str.AccentOrange; Accent.Emerald -> Str.AccentEmerald; Accent.Sapphire -> Str.AccentSapphire; Accent.Rose -> Str.AccentRose; Accent.Violet -> Str.AccentViolet; Accent.Gold -> Str.AccentGold }
+fun TextSize.label() = when (this) { TextSize.Small -> Str.TextSmall; TextSize.Normal -> Str.TextNormal; TextSize.Large -> Str.TextLarge; TextSize.Larger -> Str.TextLarger }
+fun Density.label() = if (this == Density.Comfortable) Str.DensityComfortable else Str.DensityCompact
