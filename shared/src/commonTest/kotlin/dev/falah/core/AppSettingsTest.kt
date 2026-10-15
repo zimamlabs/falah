@@ -87,11 +87,15 @@ class TimesByTheMinuteTest {
 }
 
 class CountdownTest {
-    @Test fun hoursAndMinutesAboveAMinute() { val c = Countdown.of(1 * 3600 + 43 * 60 + 20L); assertEquals(Triple(1, 43, false), Triple(c.hours, c.minutes, c.inLastMinute)) }
-    @Test fun justOverAMinuteStillShowsMinutes() { val c = Countdown.of(60); assertEquals(1, c.minutes); assertFalse(c.inLastMinute) }
-    @Test fun secondsOnlyInTheLastMinute() { val c = Countdown.of(59); assertTrue(c.inLastMinute); assertEquals(59, c.seconds) }
-    @Test fun neverNegative() = assertEquals(0, Countdown.of(-5).seconds)
-    @Test fun theScreenUpdatesEverySecondOnlyInTheLastMinute() { assertEquals(400, Countdown.nextTickMillis(30, 5_600)); assertEquals(20 + 15_000, Countdown.nextTickMillis(3600, 45_000)) }
+    @Test fun alwaysHoursMinutesSeconds() { val c = Countdown.of(1 * 3600 + 43 * 60 + 20L); assertEquals(Triple(1, 43, 20), Triple(c.hours, c.minutes, c.seconds)); assertEquals("01:43:20", c.text()) }
+    @Test fun zeroPadsEveryPart() = assertEquals("00:00:07", Countdown.of(7).text())
+    @Test fun wholeHoursAndMinutes() { assertEquals("00:01:00", Countdown.of(60).text()); assertEquals("10:00:00", Countdown.of(36_000).text()); assertEquals("23:59:59", Countdown.of(86_399).text()) }
+    @Test fun neverNegative() = assertEquals("00:00:00", Countdown.of(-5).text())
+    @Test fun theNextTickIsTheNextWholeSecondOfTheClockWhateverTheLastDelay() {
+        assertEquals(402, Countdown.nextTickMillis(5_600)); assertEquals(1002, Countdown.nextTickMillis(7_000))
+        // a late tick (the clock is already 950 ms into the second) waits only 52 ms, so there is no accumulated drift
+        assertEquals(52, Countdown.nextTickMillis(12_950))
+    }
 }
 
 class PrayerScreenDataTest {

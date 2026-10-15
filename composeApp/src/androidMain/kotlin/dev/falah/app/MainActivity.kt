@@ -16,6 +16,7 @@ import android.os.Environment
 import android.provider.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import android.hardware.GeomagneticField
 import android.hardware.Sensor
@@ -29,6 +30,7 @@ import okio.Path.Companion.toPath
 class MainActivity : ComponentActivity() {
     private var pending: ((Boolean) -> Unit)? = null
     private var resumed by mutableIntStateOf(0)
+    private var inFront by mutableStateOf(false)
     private var soundDone: ((String) -> Unit)? = null
     private val soundPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -94,11 +96,17 @@ class MainActivity : ComponentActivity() {
             override fun stopCompass() { listener?.let { sensors.unregisterListener(it) }; listener = null }
         }
         platform.reschedule()
-        setContent { FalahApp(mirrored, platform, files, resumed) }
+        setContent { FalahApp(mirrored, platform, files, resumed, active = inFront) }
     }
 
     override fun onResume() {
         super.onResume()
         resumed++
+        inFront = true
+    }
+
+    override fun onPause() {
+        inFront = false
+        super.onPause()
     }
 }
