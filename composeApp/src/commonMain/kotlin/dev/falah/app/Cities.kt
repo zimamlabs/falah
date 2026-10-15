@@ -1,6 +1,6 @@
 package dev.falah.app
 
-/** Places to choose from; "Custom" lets you type any latitude and longitude. */
+/** A place. [Places] are the built-in choices; any other latitude and longitude is typed in through the place menu. */
 data class Place(val name: String, val latitude: Double, val longitude: Double, val arabic: String = name)
 
 val Places = listOf(

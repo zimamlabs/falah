@@ -12,6 +12,7 @@ import dev.falah.core.Method
 import dev.falah.core.Prayer
 import dev.falah.core.PrayerLog
 import dev.falah.core.PrayerTimes
+import dev.falah.core.Str
 import dev.falah.core.TasbihLog
 import dev.falah.core.of
 import kotlinx.datetime.Clock
@@ -81,10 +82,17 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
 
     fun minutesLeft(): Int = ((next.at - hourNow) * 60).toInt().coerceAtLeast(0)
 
+    private var placePicked by mutableStateOf(false)
+
     fun choosePlace(p: Place) {
+        placePicked = true
         placeName = p.name; lat = p.latitude; lon = p.longitude
         prefs.set("place", p.name); prefs.set("lat", p.latitude.toString()); prefs.set("lon", p.longitude.toString()); platform.reschedule()
     }
+    /** True once the user picked or typed a place; until then the Cairo default is shown with a notice. */
+    val placeChosen: Boolean get() = prefs.get("place") != null || placePicked
+
+    fun chooseCustomPlace(name: String, latitude: Double, longitude: Double) = choosePlace(Place(name.trim().ifEmpty { Str.CustomPlaceDefaultName.en }, latitude, longitude))
     fun chooseMethod(m: Method) { method = m; prefs.set("method", m.name); platform.reschedule() }
     fun chooseAsr(a: AsrFactor) { asr = a; prefs.set("asr", a.name); platform.reschedule() }
     fun chooseTheme(mode: String) { themeMode = mode; prefs.set("theme", mode) }
