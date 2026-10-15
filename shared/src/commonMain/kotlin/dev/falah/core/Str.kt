@@ -71,6 +71,8 @@ enum class Str(val en: String, val ar: String) {
     TasbihSaved("Every tap is saved to tasbih.csv in your data folder.", "كل ضغطة تُحفظ في الملف tasbih.csv داخل مجلد بياناتك."),
     RestartTitle("Restart this round?", "إعادة هذه الجولة؟"),
     RestartText("The round goes back to 0. The totals already saved are not changed.", "تعود الجولة إلى 0. لا تتغير المجاميع المحفوظة."),
+    SaveFailed("Could not save to the data folder. Your last change may be lost when you close the app. Check the free space and the folder.", "تعذّر الحفظ في مجلد البيانات. قد يضيع آخر تغيير عند إغلاق التطبيق. تحقق من المساحة الحرة والمجلد."),
+    DataUnreadable("A data file could not be read, so Falah will not change it and nothing was overwritten. A copy is kept beside it when possible (name.corrupt-1). Check the folder, then restart the app.", "تعذّرت قراءة ملف بيانات، لذلك لن يغيّره فالح ولم يُكتب فوق شيء. تُحفظ نسخة بجانبه إن أمكن (الاسم.corrupt-1). تحقق من المجلد ثم أعد تشغيل التطبيق."),
     SettingsPlace("Place", "المكان"),
     CustomPlaceMenu("Other place, type coordinates", "مكان آخر، اكتب الإحداثيات"),
     CustomPlaceTitle("Your coordinates", "إحداثياتك"),

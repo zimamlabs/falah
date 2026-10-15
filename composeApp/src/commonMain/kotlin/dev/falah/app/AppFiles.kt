@@ -6,8 +6,12 @@ import okio.Path
 
 /** Where Falah keeps the files you can see: its settings copy and the prayer log. */
 interface AppFiles {
-    fun read(name: String): String?
-    fun write(name: String, text: String)
+    /** The file's text, or null when it is missing or unreadable; use [load] when the difference matters. */
+    fun read(name: String): String? = (load(name) as? FileLoad.Loaded)?.text
+    /** Reads a file and tells a missing file from one that exists but cannot be read. */
+    fun load(name: String): FileLoad
+    /** Writes the file; false when it could not be saved (disk full, folder not writable). */
+    fun write(name: String, text: String): Boolean
     /** The folder in use, as text. */
     val location: String
     /** True when that is the visible Zimam folder, false for the app's private folder. */
@@ -24,11 +28,19 @@ interface AppFiles {
     fun removeOld(): Boolean
 }
 
+/** The result of reading a data file. */
+sealed interface FileLoad {
+    data object Missing : FileLoad
+    data class Loaded(val text: String) : FileLoad
+    /** The file exists but could not be read; the app must not write over it. */
+    data object Unreadable : FileLoad
+}
+
 /** Files in memory only; used before a platform supplies real ones. */
 class MemoryFiles : AppFiles {
     private val data = mutableMapOf<String, String>()
-    override fun read(name: String) = data[name]
-    override fun write(name: String, text: String) { data[name] = text }
+    override fun load(name: String) = data[name]?.let { FileLoad.Loaded(it) } ?: FileLoad.Missing
+    override fun write(name: String, text: String): Boolean { data[name] = text; return true }
     override val location = "Memory"
     override val shared = false
     override val canAskAccess = false
@@ -82,18 +94,35 @@ class FolderFiles(
         return changed
     }
 
-    override fun read(name: String): String? = runCatching { if (fs.exists(root / name)) fs.read(root / name) { readUtf8() } else null }.getOrNull()
+    override fun load(name: String): FileLoad {
+        val file = root / name
+        return try {
+            if (fs.exists(file)) FileLoad.Loaded(fs.read(file) { readUtf8() }) else FileLoad.Missing
+        } catch (e: Exception) {
+            keepCorruptCopy(name)
+            FileLoad.Unreadable
+        }
+    }
+
+    /** Keeps the first unreadable version beside the original as `name.corrupt-1`, if it can be copied at all. */
+    private fun keepCorruptCopy(name: String) {
+        runCatching {
+            val taken = fs.list(root).any { it.name.startsWith("$name.corrupt-") }
+            if (!taken) fs.copy(root / name, root / "$name.corrupt-1")
+        }
+    }
 
     /** Writes through a temporary file and keeps the previous version as `name.bak`. */
-    override fun write(name: String, text: String) {
-        runCatching {
-            fs.createDirectories(root)
-            val file = root / name
-            val part = root / "$name.part"
-            fs.write(part) { writeUtf8(text) }
-            if (fs.exists(file)) fs.copy(file, root / "$name.bak")
-            fs.atomicMove(part, file)
-        }
+    override fun write(name: String, text: String): Boolean = try {
+        fs.createDirectories(root)
+        val file = root / name
+        val part = root / "$name.part"
+        fs.write(part) { writeUtf8(text) }
+        if (fs.exists(file)) fs.copy(file, root / "$name.bak")
+        fs.atomicMove(part, file)
+        true
+    } catch (e: Exception) {
+        false
     }
 
     override fun removableOld(): String? =
