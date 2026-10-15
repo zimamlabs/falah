@@ -70,7 +70,15 @@ fun PlacePicker(s: FalahState) {
     var menu by remember { mutableStateOf(false) }
     var custom by remember { mutableStateOf(false) }
     var askLocation by remember { mutableStateOf(false) }
-    Box {
+    var details by remember { mutableStateOf(false) }
+    ContextMenuBox(
+        buildList {
+            if (s.platform.canLocate) add(MenuAction(Str.UseLocation.t()) { askLocation = true })
+            add(MenuAction(Str.CustomPlaceMenu.t()) { custom = true })
+            add(MenuAction(Str.MenuPlaceDetails.t()) { details = true })
+        },
+        onClick = { menu = true },
+    ) {
         OutlinedButton({ menu = true }, Modifier.testTag("place-picker")) { Icon16(); Text(" ${placeShown(s.placeName)}") }
         DropdownMenu(menu, { menu = false }) {
             Places.forEach { p -> DropdownMenuItem(text = { Text(p.shown()) }, onClick = { menu = false; s.choosePlace(p) }) }
@@ -90,6 +98,11 @@ fun PlacePicker(s: FalahState) {
         dismissButton = { TextButton({ askLocation = false }) { Text(Str.LocationNotNow.t()) } },
     )
     if (custom) CustomPlaceDialog(s) { custom = false }
+    if (details) AlertDialog(
+        onDismissRequest = { details = false }, title = { Text(placeShown(s.placeName)) },
+        text = { Text(Str.PlaceDetailsText.t("%.4f".format(s.lat), "%.4f".format(s.lon), PrayerTimes.qibla(s.lat, s.lon).toInt(), if (!s.placeChosen) Str.PlaceNotChosen.t() else if (s.settings.placeSource == dev.falah.core.PlaceSource.Gps) Str.PlaceFromGps.t() else Str.PlaceChosenByYou.t())) },
+        confirmButton = { TextButton({ details = false }) { Text(Str.Close.t()) } },
+    )
 }
 
 @Composable
@@ -141,10 +154,12 @@ fun TimesPage(s: FalahState) = Page {
         Prayer.entries.forEach { p ->
             val upcoming = s.next?.let { !it.tomorrow && p == it.prayer } == true
             val open = LocalPrayerOpener.current
-            Row(Modifier.testTag("times-row-${p.name}").fillMaxWidth().defaultMinSize(minHeight = LocalSpacing.current.rowMinHeight).then(if (open != null) Modifier.clickable { open(p) } else Modifier).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            ContextMenuBox(prayerActions(s, p), Modifier.testTag("times-row-${p.name}").fillMaxWidth().defaultMinSize(minHeight = LocalSpacing.current.rowMinHeight), onClick = { open?.invoke(p) }) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(p.shown(), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal, color = if (upcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                 p.second()?.let { Text(it, Modifier.padding(end = 16.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 Text(num(PrayerTimes.clock(s.times.of(p)) ?: "--:--"), style = MaterialTheme.typography.titleMedium, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal)
+            }
             }
         }
     }

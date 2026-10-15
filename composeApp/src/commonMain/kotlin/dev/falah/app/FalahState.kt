@@ -185,6 +185,9 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
         if (save(TASBIH_FILE, next.encode()) || TASBIH_FILE !in unreadable) tasbih = next
     }
 
+    /** Removes today's count of one dhikr (the screen has asked first). */
+    fun deleteTasbihToday(key: String) { val next = tasbih.clear(today, key); if (save(TASBIH_FILE, next.encode()) || TASBIH_FILE !in unreadable) tasbih = next }
+
     /** Minutes before the prayer the notification fires; 0 is at the prayer. */
     fun offsetOf(p: Prayer): Int = settings.offsetOf(p)
     /** Moves one prayer's time by [minutes] (-30 to 30, 0 removes it). */

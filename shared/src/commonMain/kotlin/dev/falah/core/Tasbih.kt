@@ -20,6 +20,8 @@ data class TasbihLog(val counts: Map<Pair<LocalDate, String>, Int> = emptyMap())
         val next = (counts[k] ?: 0) + n
         return TasbihLog(if (next <= 0) counts - k else counts + (k to next))
     }
+    /** The count of one dhikr on one day removed (the user asked, after a confirmation). */
+    fun clear(date: LocalDate, key: String): TasbihLog = TasbihLog(counts - (date to key))
     fun on(date: LocalDate, key: String): Int = counts[date to key] ?: 0
     fun dayTotal(date: LocalDate): Int = counts.filterKeys { it.first == date }.values.sum()
     fun total(key: String): Int = counts.filterKeys { it.second == key }.values.sum()

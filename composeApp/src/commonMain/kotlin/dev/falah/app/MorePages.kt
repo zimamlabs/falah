@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -48,6 +49,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -149,9 +152,11 @@ fun LogPage(s: FalahState) {
                 SectionTitle(Icons.Rounded.CheckCircle, day.longText())
                 loggedPrayers.forEach { p ->
                     val on = p in s.log.done(day)
-                    Row(Modifier.fillMaxWidth().clickable { s.markOn(day, p, !on) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(p.shown(), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                        Icon(if (on) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null, tint = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+                    ContextMenuBox(prayerActions(s, p, day), Modifier.fillMaxWidth().defaultMinSize(minHeight = LocalSpacing.current.rowMinHeight), onClick = { s.markOn(day, p, !on) }) {
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(p.shown(), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                            Icon(if (on) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, if (on) Str.Prayed.t() else Str.MarkPrayed.t(), tint = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+                        }
                     }
                 }
             }
@@ -164,6 +169,7 @@ fun TasbihPage(s: FalahState) {
     var selected by remember { mutableStateOf(dhikrs.first()) }
     var round by remember { mutableStateOf(0) }
     var confirmReset by remember { mutableStateOf(false) }
+    var details by remember { mutableStateOf(false) }
     val todayCount = s.tasbih.on(s.today, selected.key)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         Text(Str.TasbihTitle.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
@@ -174,12 +180,20 @@ fun TasbihPage(s: FalahState) {
             Text(selected.arabic, Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Ring(round / selected.target.toFloat(), 220.dp, 12.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.primary) {
-                    Box(Modifier.size(180.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape).clickable { s.tap(selected.key); round = if (round + 1 >= selected.target) 0 else round + 1 }, contentAlignment = Alignment.Center) {
+                    ContextMenuBox(
+                        listOf(
+                            MenuAction(Str.MenuDetails.t()) { details = true },
+                            MenuAction(Str.RestartRound.t()) { round = 0 },
+                            deleteAction(Str.MenuDeleteCount.t(), ConfirmSpec(Str.MenuDeleteCountTitle.t(), Str.MenuDeleteCountText.t(todayCount, selected.shown()), Str.MenuDelete.t())) { s.deleteTasbihToday(selected.key); round = 0 },
+                        ),
+                        Modifier.testTag("tasbih-counter").size(180.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape).clip(CircleShape),
+                        onClick = { s.tap(selected.key); round = if (round + 1 >= selected.target) 0 else round + 1 },
+                    ) { Box(Modifier.size(180.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(num(round), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                             Text(Str.TasbihOfTap.t(selected.target), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                         }
-                    }
+                    } }
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -192,6 +206,11 @@ fun TasbihPage(s: FalahState) {
             Text(Str.TasbihSaved.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+    if (details) AlertDialog(
+        onDismissRequest = { details = false }, title = { Text(selected.shown()) },
+        text = { Text(Str.TasbihDetailsText.t(todayCount, s.tasbih.total(selected.key), s.tasbih.counts.keys.count { it.second == selected.key })) },
+        confirmButton = { TextButton({ details = false }) { Text(Str.Close.t()) } },
+    )
     if (confirmReset) AlertDialog(
         onDismissRequest = { confirmReset = false },
         title = { Text(Str.RestartTitle.t()) },

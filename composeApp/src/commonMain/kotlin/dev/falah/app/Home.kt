@@ -109,14 +109,13 @@ private fun Hero(s: FalahState) {
 private fun Timeline(s: FalahState) {
     FalahCard {
         SectionTitle(Icons.Rounded.Today, Str.HomeToday.t(), Str.PrayedOf.t(loggedPrayers.count { s.prayed(it) }))
+        val opener = LocalPrayerOpener.current
         Prayer.entries.forEach { p ->
             val t = s.times.of(p)
             val upcoming = s.next?.let { !it.tomorrow && p == it.prayer } == true
             val past = t != null && t <= s.hourNow
-            Row(
-                Modifier.fillMaxWidth().then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialTheme.shapes.medium) else Modifier).then(LocalPrayerOpener.current?.let { open -> Modifier.clickable { open(p) } } ?: Modifier).padding(horizontal = 8.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            ContextMenuBox(prayerActions(s, p), Modifier.fillMaxWidth().then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialTheme.shapes.medium) else Modifier), onClick = { opener?.invoke(p) }) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primary, CircleShape) else Modifier.border(2.dp, if (past) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.secondary, CircleShape)))
                 Spacer(Modifier.size(12.dp))
                 Column(Modifier.weight(1f)) {
@@ -128,6 +127,7 @@ private fun Timeline(s: FalahState) {
                 else IconButton({ s.mark(p, !s.prayed(p)) }) {
                     Icon(if (s.prayed(p)) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, if (s.prayed(p)) Str.Prayed.t() else Str.MarkPrayed.t(), tint = if (s.prayed(p)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
                 }
+            }
             }
         }
     }
