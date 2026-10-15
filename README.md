@@ -24,7 +24,7 @@ Android today, Linux later. Falah (فلاح, success) shows today's five prayers
 - **Reminder offsets**: be notified at the prayer or 5, 10, 15 or 30 minutes before it, for each prayer.
 - **Live qibla compass**: on phones with a compass sensor the dial follows the phone, tells you how far to turn, and says when you face the qibla; without a sensor it shows the bearing from north.
 - **First-run tour** and a one-time **What's new** note after each update.
-- **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, within about 2 minutes of an independent cross-check (see `ReferenceTimesTest`).
+- **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, within seconds of an independent solar model (see Calculation below).
 - **Next prayer** and the time left, updated as the day goes.
 - **Notifications** at the prayers you pick, set again after a restart.
 - **Qibla** direction from where you are.
@@ -74,6 +74,14 @@ Settings and the prayer log are plain files (`settings.txt`, `prayer-log.csv`). 
 ## Privacy
 
 No account, no ads, no tracking. Falah keeps your data on your phone in plain files you can open anywhere, and sends nothing over the network.
+
+## Calculation
+
+- Methods: Egyptian General Authority (default), Muslim World League, Umm al-Qura, Karachi and ISNA; Asr standard (shadow one times the object) or Hanafi (two times). Maghrib is sunset, sunrise is the sun's upper edge at 0.833 degrees. Umm al-Qura puts Isha 90 minutes after Maghrib, and 120 minutes in Ramadan (tabular Hijri month 9, which can differ by a day from the announced calendar).
+- The sun is positioned at the moment of each event, found by repeating the calculation. Times are shown to the nearest minute, and you can move any prayer by up to 30 minutes in Settings.
+- Accuracy: `ReferenceTimesTest` compares 26 days across Cairo, Makkah, London, New York, Istanbul and Sydney with an independent implementation of a more precise solar model; the largest difference is 0.05 minutes (3 seconds). That is a cross-check, not a published timetable, so compare with your local authority's table before relying on it, and use the adjustment if they differ.
+- Known limit: there is no high-latitude rule yet, so where the sun never reaches the Fajr or Isha angle (for example London in June) those two times show `--:--`.
+- Times follow the phone's time zone and clock.
 
 ## Build
 

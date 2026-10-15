@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 class CountdownStateTest {
     private val zone = TimeZone.currentSystemDefault()
     private fun state() = FalahState(MapPrefs(mapOf("place" to "Cairo", "lat" to "30.0444", "lon" to "31.2357")), MemoryFiles(), NoPlatform)
-    private fun at(s: FalahState, hours: Double): Instant = s.today.atStartOfDayIn(zone).plus((hours * 3600).toLong(), DateTimeUnit.SECOND)
+    private fun at(s: FalahState, hours: Double): Instant = s.today.atStartOfDayIn(zone).plus(Math.round(hours * 3600), DateTimeUnit.SECOND)
 
     @Test fun afterIshaTheNextPrayerIsTomorrowsFajrAndTheCountdownCrossesMidnight() {
         val s = state(); val isha = s.times.of(Prayer.Isha)!!

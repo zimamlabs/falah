@@ -42,29 +42,44 @@ enum class AsrFactor(val label: String, val factor: Double) { Standard("Standard
 object PrayerTimes {
     private const val SUNRISE_ANGLE = 0.833
 
+    /** Minutes after Maghrib that Umm al-Qura puts Isha during Ramadan (90 the rest of the year). */
+    const val UMM_AL_QURA_RAMADAN_ISHA_MINUTES = 120
+
     /**
      * Times for [date] at [latitude], [longitude] (degrees, east positive) in a zone [utcOffsetHours] ahead of UTC (daylight saving included).
-     * Uses the sun's position from the standard low-precision astronomical formulas, within about 2 minutes of an independent cross-check (ReferenceTimesTest).
+     * The sun's position (standard low-precision astronomical formulas) is taken at the moment of each event, found by repeating the
+     * calculation, not once for the whole day. Umm al-Qura Isha is 120 minutes after Maghrib in Ramadan (tabular Hijri month 9).
+     * Measured against an independent solar model: see ReferenceTimesTest.
      */
     fun compute(date: LocalDate, latitude: Double, longitude: Double, utcOffsetHours: Double, method: Method = Method.Egyptian, asr: AsrFactor = AsrFactor.Standard): DayTimes {
-        val jd = julianDay(date) - longitude / (15 * 24)
-        val (decl, eqt) = sunPosition(jd)
-        val noon = 12 + utcOffsetHours - longitude / 15 - eqt
-        fun t(angle: Double): Double? {
-            val c = (-sin(rad(angle)) - sin(rad(decl)) * sin(rad(latitude))) / (cos(rad(decl)) * cos(rad(latitude)))
-            return if (c < -1 || c > 1) null else deg(acos(c)) / 15
+        val jd0 = julianDay(date)
+        fun sunAt(utHours: Double) = sunPosition(jd0 + utHours / 24)
+        val meridian = 12 - longitude / 15
+        var noonUt = meridian
+        repeat(3) { noonUt = meridian - sunAt(noonUt).second }
+        val noonDecl = sunAt(noonUt).first
+        /** Local clock hour when the sun is [angle] degrees above (positive) or below (negative) the horizon, before or after noon. */
+        fun event(angle: Double, afterNoon: Boolean): Double? {
+            var t = noonUt
+            repeat(4) {
+                val (decl, eqt) = sunAt(t)
+                val c = (sin(rad(angle)) - sin(rad(decl)) * sin(rad(latitude))) / (cos(rad(decl)) * cos(rad(latitude)))
+                if (c < -1 || c > 1) return null
+                val h = deg(acos(c)) / 15
+                t = meridian - eqt + (if (afterNoon) h else -h)
+            }
+            return t + utcOffsetHours
         }
-        val sunriseT = t(SUNRISE_ANGLE)
-        val maghrib = sunriseT?.let { noon + it }
-        val asrAngle = -deg(atan(1 / (asr.factor + tan(rad(kotlin.math.abs(latitude - decl))))))
-        val asrT = t(asrAngle)
+        val asrAngle = deg(atan(1 / (asr.factor + tan(rad(kotlin.math.abs(latitude - noonDecl))))))
+        val maghrib = event(-SUNRISE_ANGLE, true)
+        val ishaMinutes = method.ishaAfterMaghribMinutes?.let { if (method == Method.UmmAlQura && Hijri.of(date).month == 9) UMM_AL_QURA_RAMADAN_ISHA_MINUTES else it }
         return DayTimes(
-            fajr = t(method.fajrAngle)?.let { noon - it },
-            sunrise = sunriseT?.let { noon - it },
-            dhuhr = noon,
-            asr = asrT?.let { noon + it },
+            fajr = event(-method.fajrAngle, false),
+            sunrise = event(-SUNRISE_ANGLE, false),
+            dhuhr = noonUt + utcOffsetHours,
+            asr = event(asrAngle, true),
             maghrib = maghrib,
-            isha = method.ishaAfterMaghribMinutes?.let { m -> maghrib?.plus(m / 60.0) } ?: t(method.ishaAngle)?.let { noon + it },
+            isha = ishaMinutes?.let { m -> maghrib?.plus(m / 60.0) } ?: event(-method.ishaAngle, true),
         )
     }
 
