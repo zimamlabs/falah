@@ -84,7 +84,7 @@ private fun Header(s: FalahState) {
 @Composable
 private fun Hero(s: FalahState) {
     val n = s.next
-    val left = s.minutesLeft()
+    val left = s.countdown
     FalahCard(container = MaterialTheme.colorScheme.primaryContainer, diamond = true, glowing = true) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -95,7 +95,7 @@ private fun Hero(s: FalahState) {
             }
             Ring(n.progress, 124.dp, 10.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f), MaterialTheme.colorScheme.primary) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(num("${left / 60}:${(left % 60).toString().padStart(2, '0')}"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(countdownText(left), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Text(Str.TimeLeft.t(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                 }
             }

@@ -8,7 +8,9 @@ import androidx.compose.runtime.setValue
 import dev.falah.core.AppSettings
 import dev.falah.core.AsrFactor
 import dev.falah.core.ThemeMode
+import dev.falah.core.Countdown
 import dev.falah.core.DayTimes
+import dev.falah.core.shifted
 import dev.falah.core.Hijri
 import dev.falah.core.Method
 import dev.falah.core.Prayer
@@ -81,7 +83,7 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     val hourNow: Double get() = local.hour + local.minute / 60.0 + local.second / 3600.0
     private val offset get() = zone.offsetAt(now).totalSeconds / 3600.0
 
-    val times: DayTimes by derivedStateOf { PrayerTimes.compute(today, lat, lon, offset, method, asr) }
+    val times: DayTimes by derivedStateOf { PrayerTimes.compute(today, lat, lon, offset, method, asr).shifted(settings.adjust) }
     val hijri get() = Hijri.of(today, hijriAdjust)
 
     val next: NextPrayer by derivedStateOf {
@@ -91,14 +93,17 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
         val nextAt: Double; val prayer: Prayer; val tomorrow: Boolean
         if (upcoming != null) { prayer = upcoming; nextAt = times.of(upcoming)!!; tomorrow = false }
         else {
-            val t = PrayerTimes.compute(today.plus(1, DateTimeUnit.DAY), lat, lon, offset, method, asr)
+            val t = PrayerTimes.compute(today.plus(1, DateTimeUnit.DAY), lat, lon, offset, method, asr).shifted(settings.adjust)
             prayer = Prayer.Fajr; nextAt = (t.fajr ?: 5.0) + 24.0; tomorrow = true
         }
         val before = Prayer.entries.mapNotNull { times.of(it) }.filter { it <= h }.maxOrNull() ?: ((times.isha ?: 20.0) - 24.0)
         NextPrayer(prayer, nextAt, tomorrow, ((h - before) / (nextAt - before)).toFloat().coerceIn(0f, 1f))
     }
 
-    fun minutesLeft(): Int = ((next.at - hourNow) * 60).toInt().coerceAtLeast(0)
+    /** Seconds to the next prayer, counted to the minute that is shown for it. */
+    fun secondsLeft(): Long = Math.round(Math.round(next.at * 60) * 60 - hourNow * 3600).coerceAtLeast(0)
+    val countdown get() = Countdown.of(secondsLeft())
+    fun minutesLeft(): Int = (secondsLeft() / 60).toInt()
 
     /** Changes settings and saves only what differs. Alarms are set again when anything they depend on changed. */
     fun update(change: AppSettings.() -> AppSettings) {
@@ -108,7 +113,7 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
         if (new.alarmInputs() != old.alarmInputs()) platform.reschedule()
     }
 
-    private fun AppSettings.alarmInputs() = listOf(latitude, longitude, method, asr, notify, offsets)
+    private fun AppSettings.alarmInputs() = listOf(latitude, longitude, method, asr, notify, offsets, adjust)
 
     val placeChosen: Boolean get() = settings.placeChosen
 
@@ -153,6 +158,8 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
 
     /** Minutes before the prayer the notification fires; 0 is at the prayer. */
     fun offsetOf(p: Prayer): Int = settings.offsetOf(p)
+    /** Moves one prayer's time by [minutes] (-30 to 30, 0 removes it). */
+    fun setAdjust(p: Prayer, minutes: Int) = update { copy(adjust = if (minutes == 0) adjust - p else adjust + (p to minutes.coerceIn(-30, 30))) }
     fun setOffset(p: Prayer, minutes: Int) = update { copy(offsets = offsets + (p to minutes)) }
 
     companion object { const val LOG_FILE = "prayer-log.csv"

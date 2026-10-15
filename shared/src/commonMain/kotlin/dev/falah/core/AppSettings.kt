@@ -39,6 +39,8 @@ data class AppSettings(
     val notify: Set<Prayer> = emptySet(),
     /** Minutes before each prayer the notification fires. */
     val offsets: Map<Prayer, Int> = emptyMap(),
+    /** Minutes added to (or taken from) each prayer's time, -30 to 30. */
+    val adjust: Map<Prayer, Int> = emptyMap(),
 ) {
     fun offsetOf(p: Prayer): Int = offsets[p] ?: 0
 
@@ -74,6 +76,7 @@ object SettingsCodec {
             sections = if (sections.isNullOrEmpty()) d.sections else d.withSections(sections).sections,
             startSection = pick(Section.entries, "start", { it.key }, d.startSection),
             notify = Prayer.entries.filter { values["notify.${it.name}"] == "1" }.toSet(),
+            adjust = Prayer.entries.mapNotNull { p -> values["adjust.${p.name}"]?.toIntOrNull()?.takeIf { it in -30..30 && it != 0 }?.let { p to it } }.toMap(),
             offsets = Prayer.entries.mapNotNull { p -> values["offset.${p.name}"]?.toIntOrNull()?.takeIf { it in reminderOffsets }?.let { p to it } }.toMap(),
         ).let { it.copy(startSection = it.startSection.takeIf { s -> s in it.sections } ?: Section.Home) }
     }
@@ -88,5 +91,6 @@ object SettingsCodec {
         put("sections", s.sections.joinToString(",") { it.key }); put("start", s.startSection.key)
         Prayer.entries.forEach { put("notify.${it.name}", if (it in s.notify) "1" else "0") }
         s.offsets.forEach { (p, m) -> put("offset.${p.name}", m.toString()) }
+        Prayer.entries.forEach { put("adjust.${it.name}", (s.adjust[it] ?: 0).toString()) }
     }
 }

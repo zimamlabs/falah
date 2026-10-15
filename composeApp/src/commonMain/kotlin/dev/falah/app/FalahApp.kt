@@ -3,6 +3,7 @@ package dev.falah.app
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import dev.falah.core.Countdown
 import dev.falah.core.I18n
 import dev.falah.core.Lang
 import dev.falah.core.Str
@@ -68,7 +69,13 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
             state.reload()
         }
     }
-    LaunchedEffect(Unit) { while (true) { delay(15_000); state.now = Clock.System.now() } }
+    // Ticks each second in the last minute before a prayer and on each whole minute otherwise.
+    LaunchedEffect(Unit) {
+        while (true) {
+            val now = Clock.System.now(); state.now = now
+            delay(Countdown.nextTickMillis(state.secondsLeft(), now.toEpochMilliseconds()))
+        }
+    }
     val language = I18n.resolve(state.langChoice, systemLanguage())
     CompositionLocalProvider(
         LocalAppLocale provides AppLocale(language, state.arabicDigits),

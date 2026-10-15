@@ -32,6 +32,8 @@ object PrayerAlarms {
         val manager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = PendingIntent.getBroadcast(context, 0, Intent(context, PrayerReceiver::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         manager.cancel(intent)
+        // No place chosen yet: do not set reminders for a placeholder city.
+        if (prefs.getString("place", null) == null) return
         val next = Schedule.next(
             Clock.System.now(), TimeZone.currentSystemDefault(),
             prefs.getString("lat", null)?.toDoubleOrNull() ?: 30.0444, prefs.getString("lon", null)?.toDoubleOrNull() ?: 31.2357,
@@ -39,6 +41,7 @@ object PrayerAlarms {
             AsrFactor.entries.firstOrNull { it.name == prefs.getString("asr", null) } ?: AsrFactor.Standard,
             chosen(prefs),
             Prayer.entries.associateWith { prefs.getString("offset.${it.name}", null)?.toIntOrNull() ?: 0 },
+            Prayer.entries.associateWith { prefs.getString("adjust.${it.name}", null)?.toIntOrNull()?.coerceIn(-30, 30) ?: 0 },
         ) ?: return
         prefs.edit().putString("next.prayer", next.prayer.name).putInt("next.before", next.minutesBefore).apply()
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
