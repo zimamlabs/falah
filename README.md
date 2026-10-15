@@ -17,19 +17,17 @@ Android today, Linux later. Falah (فلاح, success) shows today's five prayers
 
 ## Features
 
-- **Home**: a greeting with the Gregorian and Hijri date, the next prayer with a countdown ring, a timeline of the day with a tick for each prayer you pray, a streak and a week strip, a mini qibla card, a daily reminder (a short dua) and quick actions. Times, Qibla and Settings are pages reached from the bottom bar.
-- **Prayer log**: tick the prayers you prayed; the streak and week strip follow. The Log page shows a month calendar of rings, the month's totals, and lets you open and edit any past day. The log is a plain file.
-- **Monthly timetable**: every day of a month with all six times (Times, then Month).
-- **Tasbih**: a counter with six common dhikr and a round for each; totals per day and all time are saved.
-- **Reminder offsets**: be notified at the prayer or 5, 10, 15 or 30 minutes before it, for each prayer.
-- **Live qibla compass**: on phones with a compass sensor the dial follows the phone, tells you how far to turn, and says when you face the qibla; without a sensor it shows the bearing from north.
-- **First-run tour** and a one-time **What's new** note after each update.
-- **Prayer times** computed on the phone from the sun's position: Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha, within seconds of an independent solar model (see Calculation below).
-- **Next prayer** and the time left, updated as the day goes.
-- **Notifications** at the prayers you pick, set again after a restart.
-- **Qibla** direction from where you are.
-- **Methods**: Egyptian General Authority (default), Muslim World League, Umm al-Qura, Karachi and North America, with Standard or Hanafi Asr.
-- **Places**: Cairo, Alexandria, Makkah, Madinah, Riyadh, Dubai, Istanbul, London, New York and more.
+- **Navigation**: swipe between Home, Times, Qibla, Tasbih and Log, or use the bottom bar or the side menu (sections, Settings, What's new, Tour, About). Choose which sections show, their order and the one the app opens on.
+- **Home**: a greeting with the Gregorian and Hijri date, the next prayer with a countdown in hours, minutes and seconds, a timeline of the day with a tick for each prayer, a streak and a week strip, a mini qibla card, a short dua, and a warning card if reminders may not work.
+- **Prayer times** computed on the phone from the sun's position, shown to the minute, with a per-prayer adjustment of up to 30 minutes, five methods, Standard or Hanafi Asr, and a high-latitude rule (see Calculation).
+- **Places**: use your location (GPS, with your permission), pick one of the built-in cities, or type any latitude and longitude. Nothing is assumed: until you choose, a notice says so and no reminder is set.
+- **Prayer notifications** with Prayed, Snooze and Skip buttons. Tapping one opens that prayer's screen (time, live clock, Qibla), optionally full screen over the lock screen. Minutes before the prayer and a sound (phone default, alarm, silent or one you pick) are set per prayer. Tapping a prayer in the list opens the same screen (an option).
+- **Prayer log**: tick the prayers you prayed; streaks, a month calendar and any past day can be edited. The log is a plain file, and a save that fails or a file that cannot be read is reported and never overwritten.
+- **Monthly timetable** with all six times.
+- **Tasbih**: a counter with six common dhikr and totals saved per day.
+- **Live qibla compass** on phones with a compass sensor, with the bearing from north otherwise.
+- **Appearance**: System, Light or Dark, six colour themes, four text sizes, comfortable or compact spacing, reduced animations; English and Arabic with right-to-left layout and an Arabic-Indic digits choice.
+- **Your data** in a plain-file Zimam folder you can open and back up, **Privacy**: no account, no ads, no tracking and no internet permission.
 
 Prayer times are a calculation, not an authority: check them against your local mosque or religious authority when it matters.
 
@@ -80,7 +78,7 @@ No account, no ads, no tracking. Falah keeps your data on your phone in plain fi
 - Methods: Egyptian General Authority (default), Muslim World League, Umm al-Qura, Karachi and ISNA; Asr standard (shadow one times the object) or Hanafi (two times). Maghrib is sunset, sunrise is the sun's upper edge at 0.833 degrees. Umm al-Qura puts Isha 90 minutes after Maghrib, and 120 minutes in Ramadan (tabular Hijri month 9, which can differ by a day from the announced calendar).
 - The sun is positioned at the moment of each event, found by repeating the calculation. Times are shown to the nearest minute, and you can move any prayer by up to 30 minutes in Settings.
 - Accuracy: `ReferenceTimesTest` compares 26 days across Cairo, Makkah, London, New York, Istanbul and Sydney with an independent implementation of a more precise solar model; the largest difference is 0.05 minutes (3 seconds). That is a cross-check, not a published timetable, so compare with your local authority's table before relying on it, and use the adjustment if they differ.
-- Known limit: there is no high-latitude rule yet, so where the sun never reaches the Fajr or Isha angle (for example London in June) those two times show `--:--`.
+- High latitudes: where the sun does not reach the Fajr or Isha angle (for example London in June), or reaches it too near sunrise or sunset, Falah limits the time to a share of the night by the rule you choose (angle based by default, middle of the night, one seventh, or none). A time moved by a rule is marked on its screen; near the poles in midsummer, where the sun does not set, no Fajr or Isha is shown.
 - Times follow the phone's time zone and clock.
 
 ## Build
@@ -98,7 +96,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ## Roadmap
 
-Your own location from the phone, a home-screen widget, and a statistics page. A Linux edition comes after version 1.
+A home-screen widget, a missed-prayer (qada) tracker, Ramadan mode, more calculation methods and a city search, long-press menus everywhere, and a native-speaker review of the Arabic. A Linux edition comes after version 1.
 
 ## Licence
 
