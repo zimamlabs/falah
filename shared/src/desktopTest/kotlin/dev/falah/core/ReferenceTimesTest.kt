@@ -55,7 +55,7 @@ class ReferenceTimesTest {
 
     @Test fun whereTheReferenceHasNoFajrOrIshaTheAppHasNoneEither() {
         val london = rows().single { it.city == "London" && it.date.monthNumber == 6 }
-        val t = PrayerTimes.compute(london.date, london.lat, london.lon, london.offset, london.method)
+        val t = PrayerTimes.compute(london.date, london.lat, london.lon, london.offset, london.method, highLatitude = HighLatitude.None)
         assertTrue(london.minutes[Prayer.Fajr] == null && t.fajr == null && t.isha == null)
     }
 

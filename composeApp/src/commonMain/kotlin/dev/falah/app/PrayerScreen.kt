@@ -50,7 +50,7 @@ fun PrayerScreen(s: FalahState, prayer: Prayer) = Page {
         Text(prayer.shown(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
         prayer.second()?.let { Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)) }
         Text(clock, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-        val isNext = !s.next.tomorrow && s.next.prayer == prayer
+        val isNext = s.next?.let { !it.tomorrow && it.prayer == prayer } == true
         Text(
             when { isNext -> Str.PrayerNextIn.t(countdownText(s.countdown)); time != null && time <= s.hourNow -> Str.PrayerPassedAt.t(clock); else -> Str.PrayerTimeToday.t(clock) },
             style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -110,6 +110,7 @@ private fun SoundChoice(s: FalahState, prayer: Prayer) {
 @Composable
 private fun CalculationNotes(s: FalahState, prayer: Prayer): List<String> = buildList {
     add(Str.CalcMethodLine.t(s.method.shown()))
+    if (prayer in s.times.adjusted) add(Str.CalcHighLatLine.t(s.settings.highLatitude.label))
     add(Str.CalcPlaceLine.t(placeShown(s.placeName), "%.3f".format(s.lat), "%.3f".format(s.lon)))
     add(when (prayer) {
         Prayer.Fajr -> Str.CalcFajrLine.t(s.method.fajrAngle)

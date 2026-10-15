@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.falah.core.AsrFactor
+import dev.falah.core.HighLatitude
 import dev.falah.core.Method
 import dev.falah.core.Prayer
 import dev.falah.core.Section
@@ -165,6 +166,9 @@ private fun CalculationControls(s: FalahState) {
     Text(Str.SettingsCalc.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Method.entries.forEach { m -> FilterChip(s.method == m, { s.chooseMethod(m) }, { Text(m.shown()) }) } }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { AsrFactor.entries.forEach { a -> FilterChip(s.asr == a, { s.chooseAsr(a) }, { Text(Str.AsrLine.t(a.shown())) }) } }
+    Text(Str.HighLatTitle.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { HighLatitude.entries.forEach { r -> FilterChip(s.settings.highLatitude == r, { s.chooseHighLatitude(r) }, { Text(r.label) }) } }
+    Text(Str.HighLatNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Text(Str.HijriAdjust.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(-1, 0, 1).forEach { d -> FilterChip(s.hijriAdjust == d, { s.chooseHijriAdjust(d) }, { Text(if (d > 0) Str.DayPlus.t(d) else if (d < 0) Str.DayMinus.t(-d) else Str.NoneOpt.t()) }) } }
     Text(Str.MoonNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

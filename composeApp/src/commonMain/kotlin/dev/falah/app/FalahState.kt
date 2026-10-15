@@ -83,27 +83,30 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     val hourNow: Double get() = local.hour + local.minute / 60.0 + local.second / 3600.0
     private val offset get() = zone.offsetAt(now).totalSeconds / 3600.0
 
-    val times: DayTimes by derivedStateOf { PrayerTimes.compute(today, lat, lon, offset, method, asr).shifted(settings.adjust) }
+    val times: DayTimes by derivedStateOf { PrayerTimes.compute(today, lat, lon, offset, method, asr, settings.highLatitude).shifted(settings.adjust) }
     val hijri get() = Hijri.of(today, hijriAdjust)
 
-    val next: NextPrayer by derivedStateOf {
+    /** The next prayer, or null when no prayer has a time in the coming days (midnight sun); no time is ever made up. */
+    val next: NextPrayer? by derivedStateOf {
         val h = hourNow
         val order = Prayer.entries.filter { it != Prayer.Sunrise }
         // Compared on the minute that is shown, so the countdown and the list never disagree about which prayer is next.
-        val shown = { p: Prayer -> times.of(p)?.let { Math.round(it * 60) / 60.0 } }
-        val upcoming = order.firstOrNull { (shown(it) ?: -1.0) > h }
-        val nextAt: Double; val prayer: Prayer; val tomorrow: Boolean
-        if (upcoming != null) { prayer = upcoming; nextAt = shown(upcoming)!!; tomorrow = false }
+        val shown = { t: DayTimes, p: Prayer -> t.of(p)?.let { Math.round(it * 60) / 60.0 } }
+        val upcoming = order.firstOrNull { (shown(times, it) ?: -1.0) > h }
+        var found: NextPrayer? = null
+        if (upcoming != null) found = NextPrayer(upcoming, shown(times, upcoming)!!, false, 0f)
         else {
-            val t = PrayerTimes.compute(today.plus(1, DateTimeUnit.DAY), lat, lon, offset, method, asr).shifted(settings.adjust)
-            prayer = Prayer.Fajr; nextAt = (t.fajr ?: 5.0) + 24.0; tomorrow = true
+            val t = PrayerTimes.compute(today.plus(1, DateTimeUnit.DAY), lat, lon, offset, method, asr, settings.highLatitude).shifted(settings.adjust)
+            order.firstOrNull { shown(t, it) != null }?.let { found = NextPrayer(it, shown(t, it)!! + 24.0, true, 0f) }
         }
-        val before = Prayer.entries.mapNotNull { times.of(it) }.filter { it <= h }.maxOrNull() ?: ((times.isha ?: 20.0) - 24.0)
-        NextPrayer(prayer, nextAt, tomorrow, ((h - before) / (nextAt - before)).toFloat().coerceIn(0f, 1f))
+        found?.let { n ->
+            val before = Prayer.entries.mapNotNull { times.of(it) }.filter { it <= h }.maxOrNull() ?: times.isha?.minus(24.0)
+            n.copy(progress = if (before == null) 0f else ((h - before) / (n.at - before)).toFloat().coerceIn(0f, 1f))
+        }
     }
 
     /** Seconds to the next prayer, counted to the minute that is shown for it. */
-    fun secondsLeft(): Long = Math.round(Math.round(next.at * 60) * 60 - hourNow * 3600).coerceAtLeast(0)
+    fun secondsLeft(): Long = next?.let { Math.round(Math.round(it.at * 60) * 60 - hourNow * 3600).coerceAtLeast(0) } ?: 0L
     val countdown get() = Countdown.of(secondsLeft())
     fun minutesLeft(): Int = (secondsLeft() / 60).toInt()
 
@@ -115,7 +118,7 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
         if (new.alarmInputs() != old.alarmInputs()) platform.reschedule()
     }
 
-    private fun AppSettings.alarmInputs() = listOf(latitude, longitude, method, asr, notify, offsets, adjust)
+    private fun AppSettings.alarmInputs() = listOf(latitude, longitude, method, asr, highLatitude, notify, offsets, adjust)
 
     val placeChosen: Boolean get() = settings.placeChosen
 
@@ -145,6 +148,7 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     fun clearLocationProblem() { locationProblem = null }
 
     fun chooseMethod(m: Method) = update { copy(method = m) }
+    fun chooseHighLatitude(r: dev.falah.core.HighLatitude) = update { copy(highLatitude = r) }
     fun chooseAsr(a: AsrFactor) = update { copy(asr = a) }
     fun chooseTheme(mode: ThemeMode) = update { copy(theme = mode) }
     fun chooseAccent(a: dev.falah.core.Accent) = update { copy(accent = a) }

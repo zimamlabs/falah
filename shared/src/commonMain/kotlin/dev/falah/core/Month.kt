@@ -14,12 +14,12 @@ data class TimetableRow(val date: LocalDate, val times: DayTimes)
 
 object Timetable {
     /** Every day of the month with its prayer times; the time-zone offset is taken for each day, so a clock change mid-month is followed. */
-    fun month(year: Int, month: Int, zone: TimeZone, latitude: Double, longitude: Double, method: Method, asr: AsrFactor): List<TimetableRow> {
+    fun month(year: Int, month: Int, zone: TimeZone, latitude: Double, longitude: Double, method: Method, asr: AsrFactor, highLatitude: HighLatitude = HighLatitude.AngleBased): List<TimetableRow> {
         val rows = mutableListOf<TimetableRow>()
         var d = LocalDate(year, month, 1)
         while (d.monthNumber == month) {
             val offset = zone.offsetAt(LocalDateTime(d, LocalTime(12, 0)).toInstant(zone)).totalSeconds / 3600.0
-            rows += TimetableRow(d, PrayerTimes.compute(d, latitude, longitude, offset, method, asr))
+            rows += TimetableRow(d, PrayerTimes.compute(d, latitude, longitude, offset, method, asr, highLatitude))
             d = d.plus(1, DateTimeUnit.DAY)
         }
         return rows

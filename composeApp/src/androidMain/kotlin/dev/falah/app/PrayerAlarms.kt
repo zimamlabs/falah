@@ -14,6 +14,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import dev.falah.prayer.R
 import dev.falah.core.AsrFactor
+import dev.falah.core.HighLatitude
 import dev.falah.core.Method
 import dev.falah.core.NoticeRoute
 import dev.falah.core.Prayer
@@ -44,6 +45,7 @@ object PrayerAlarms {
             chosen(prefs),
             Prayer.entries.associateWith { prefs.getString("offset.${it.name}", null)?.toIntOrNull() ?: 0 },
             Prayer.entries.associateWith { prefs.getString("adjust.${it.name}", null)?.toIntOrNull()?.coerceIn(-30, 30) ?: 0 },
+            HighLatitude.entries.firstOrNull { it.key == prefs.getString("highlat", null) } ?: HighLatitude.AngleBased,
         ) ?: return
         prefs.edit().putString("next.prayer", next.prayer.name).putInt("next.before", next.minutesBefore).putLong("next.fire", next.atMillis).putLong("next.at", next.atMillis + next.minutesBefore * 60_000L).apply()
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
