@@ -52,10 +52,11 @@ import dev.falah.core.Section
 import dev.falah.core.of
 
 @Composable
-fun HomePage(s: FalahState, sections: List<Section>, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhatsNew: () -> Unit) {
+fun HomePage(s: FalahState, resumed: Int, sections: List<Section>, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhatsNew: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         Header(s)
         Hero(s)
+        ReminderStatusCard(s, resumed, onlyWhenUsed = true)
         // Four across normally, two by two once text is large so labels never break inside a word.
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.15f) 2 else 4) {
             (sections - Section.Home).take(3).forEach { sec -> Tab.of(sec).let { t -> ActionTile(t.icon, t.label.t(), Modifier.weight(1f)) { go(t) } } }

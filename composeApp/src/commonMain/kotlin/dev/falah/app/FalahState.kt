@@ -164,6 +164,9 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     fun setAdjust(p: Prayer, minutes: Int) = update { copy(adjust = if (minutes == 0) adjust - p else adjust + (p to minutes.coerceIn(-30, 30))) }
     fun setSound(p: Prayer, sound: String) = update { copy(sounds = if (sound == dev.falah.core.Sounds.DEFAULT) sounds - p else sounds + (p to sound)) }
     fun choosePrayerScreens(on: Boolean) = update { copy(prayerScreens = on) }
+    fun setNoticeScreen(p: Prayer, on: Boolean) = update { copy(noticeScreen = if (on) noticeScreen + p else noticeScreen - p) }
+    fun chooseNoticeFullScreen(on: Boolean) = update { copy(noticeFullScreen = on) }
+    fun chooseSnooze(minutes: Int) = update { copy(snoozeMinutes = minutes) }
     fun setOffset(p: Prayer, minutes: Int) = update { copy(offsets = offsets + (p to minutes)) }
 
     companion object { const val LOG_FILE = "prayer-log.csv"

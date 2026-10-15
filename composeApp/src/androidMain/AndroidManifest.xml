@@ -4,6 +4,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:allowBackup="true"
@@ -15,6 +16,7 @@
         <activity
             android:name="dev.falah.app.MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,6 +24,8 @@
             </intent-filter>
         </activity>
         <receiver android:name="dev.falah.app.PrayerReceiver" android:exported="false" />
+        <receiver android:name="dev.falah.app.SnoozeReceiver" android:exported="false" />
+        <receiver android:name="dev.falah.app.DismissReceiver" android:exported="false" />
         <receiver android:name="dev.falah.app.BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

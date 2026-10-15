@@ -24,6 +24,9 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import dev.falah.core.Compass
+import dev.falah.core.NoticeRoute
+import dev.falah.core.PrayerNotice
+import dev.falah.core.ReminderProblem
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
@@ -31,6 +34,7 @@ class MainActivity : ComponentActivity() {
     private var pending: ((Boolean) -> Unit)? = null
     private var resumed by mutableIntStateOf(0)
     private var inFront by mutableStateOf(false)
+    private var notice by mutableStateOf<PrayerNotice?>(null)
     private var soundDone: ((String) -> Unit)? = null
     private val soundPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -66,6 +70,19 @@ class MainActivity : ComponentActivity() {
                 else { pending = done; permission.launch(Manifest.permission.POST_NOTIFICATIONS) }
             }
             override fun reschedule() = PrayerAlarms.schedule(this@MainActivity)
+            override fun snooze(prayer: dev.falah.core.Prayer, minutes: Int, prayerAtMillis: Long) = PrayerAlarms.snooze(this@MainActivity, prayer, minutes, prayerAtMillis)
+            override fun dismissNotification(prayer: dev.falah.core.Prayer) = (getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(prayer.ordinal)
+            override fun reminderStatus() = PrayerAlarms.status(this@MainActivity)
+            override fun openReminderSetting(problem: ReminderProblem) {
+                val pkg = Uri.parse("package:$packageName")
+                val intent = when (problem) {
+                    ReminderProblem.NotificationsOff -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                    ReminderProblem.ExactAlarmsOff -> if (Build.VERSION.SDK_INT >= 31) Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pkg) else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)
+                    ReminderProblem.FullScreenOff -> if (Build.VERSION.SDK_INT >= 34) Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg) else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)
+                    ReminderProblem.BatteryOptimised -> Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                }
+                runCatching { startActivity(intent) }.onFailure { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)) }
+            }
             override val canPickSound = true
             override fun pickSound(current: String, done: (String) -> Unit) {
                 soundDone = done
@@ -96,7 +113,28 @@ class MainActivity : ComponentActivity() {
             override fun stopCompass() { listener?.let { sensors.unregisterListener(it) }; listener = null }
         }
         platform.reschedule()
-        setContent { FalahApp(mirrored, platform, files, resumed, active = inFront) }
+        handle(intent)
+        setContent { FalahApp(mirrored, platform, files, resumed, active = inFront, notice = notice, onNoticeDone = { closeNotice() }) }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handle(intent)
+    }
+
+    /** A tap on a prayer notification (or its full-screen intent) opens that prayer's screen, over the lock screen if needed. */
+    private fun handle(intent: Intent?) {
+        val found = NoticeRoute.parse(intent?.action, intent?.getStringExtra(NoticeRoute.EXTRA_PRAYER), intent?.getLongExtra(NoticeRoute.EXTRA_AT, 0L))
+        notice = found ?: return
+        (getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(found.prayer.ordinal)
+        if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(true); setTurnScreenOn(true) }
+        else @Suppress("DEPRECATION") window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+    }
+
+    private fun closeNotice() {
+        notice = null
+        if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(false); setTurnScreenOn(false) }
     }
 
     override fun onResume() {

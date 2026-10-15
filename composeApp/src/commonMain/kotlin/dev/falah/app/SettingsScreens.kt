@@ -42,6 +42,10 @@ import dev.falah.core.AsrFactor
 import dev.falah.core.Method
 import dev.falah.core.Prayer
 import dev.falah.core.Section
+import dev.falah.core.SettingsCodec
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import dev.falah.core.SettingsSection
 import dev.falah.core.Str
 import dev.falah.core.ThemeMode
@@ -97,7 +101,7 @@ fun SettingsRow(icon: ImageVector, title: String, summary: String, onClick: () -
 
 /** Settings as a list of labelled sections; [page] is the open section (null shows the list). */
 @Composable
-fun SettingsPage(s: FalahState, page: SettingsSection?, open: (SettingsSection?) -> Unit, openAbout: () -> Unit) = Page {
+fun SettingsPage(s: FalahState, resumed: Int, page: SettingsSection?, open: (SettingsSection?) -> Unit, openAbout: () -> Unit) = Page {
     if (page == null) {
         Text(Str.TabSettings.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         FalahCard {
@@ -106,19 +110,19 @@ fun SettingsPage(s: FalahState, page: SettingsSection?, open: (SettingsSection?)
         }
     } else {
         Text(page.title().t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-        FalahCard { SettingsSectionBody(s, page) }
+        FalahCard { SettingsSectionBody(s, page, resumed) }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SettingsSectionBody(s: FalahState, page: SettingsSection) {
+private fun SettingsSectionBody(s: FalahState, page: SettingsSection, resumed: Int) {
     when (page) {
         SettingsSection.Appearance -> AppearanceControls(s)
         SettingsSection.Layout -> LayoutControls(s)
         SettingsSection.Language -> LanguageChips(s)
         SettingsSection.Calculation -> CalculationControls(s)
-        SettingsSection.Notifications -> NotificationControls(s)
+        SettingsSection.Notifications -> NotificationControls(s, resumed)
         SettingsSection.Data -> DataCardBody(s)
         SettingsSection.Privacy -> PrivacyBody()
     }
@@ -182,8 +186,9 @@ private fun AdjustRow(s: FalahState, p: Prayer) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun NotificationControls(s: FalahState) {
+private fun NotificationControls(s: FalahState, resumed: Int) {
     if (!s.platform.canNotify) { Text(Str.NotificationsUnavailable.t(), style = MaterialTheme.typography.bodyMedium); return }
+    ReminderStatusCard(s, resumed, onlyWhenUsed = false, showOk = true)
     Text(Str.NotifyAt.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Prayer.entries.filter { it != Prayer.Sunrise }.forEach { p -> FilterChip(s.notifyOn(p), { s.setNotify(p, !s.notifyOn(p)) }, { Text(p.shown()) }) } }
     Text(Str.NotifyNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -191,6 +196,16 @@ private fun NotificationControls(s: FalahState) {
         Text(p.shown(), style = MaterialTheme.typography.labelLarge)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(0, 5, 10, 15, 30).forEach { m -> FilterChip(s.offsetOf(p) == m, { s.setOffset(p, m) }, { Text(if (m == 0) Str.AtTheTime.t() else Str.MinBefore.t(m)) }) } }
     }
+    Text(Str.NoticeOption.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(Str.NoticeOptionNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Prayer.entries.forEach { p -> FilterChip(p in s.settings.noticeScreen, { s.setNoticeScreen(p, p !in s.settings.noticeScreen) }, { Text(p.shown()) }) } }
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        SegmentedButton(s.settings.noticeFullScreen, { s.chooseNoticeFullScreen(true) }, SegmentedButtonDefaults.itemShape(0, 2)) { Text(Str.NoticeFull.t()) }
+        SegmentedButton(!s.settings.noticeFullScreen, { s.chooseNoticeFullScreen(false) }, SegmentedButtonDefaults.itemShape(1, 2)) { Text(Str.NoticeHeadsUp.t()) }
+    }
+    Text(Str.NoticeFullNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(Str.SnoozeTitle.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { SettingsCodec.snoozeChoices.forEach { m -> FilterChip(s.settings.snoozeMinutes == m, { s.chooseSnooze(m) }, { Text(Str.MinutesShort.t(m)) }) } }
 }
 
 @Composable
