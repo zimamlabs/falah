@@ -197,7 +197,15 @@ private fun NotificationControls(s: FalahState, resumed: Int) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Prayer.entries.filter { it != Prayer.Sunrise }.forEach { p -> FilterChip(s.notifyOn(p), { s.setNotify(p, !s.notifyOn(p)) }, { Text(p.shown()) }) } }
     Text(Str.NotifyNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Prayer.entries.filter { it != Prayer.Sunrise && s.notifyOn(it) }.forEach { p ->
-        Text(p.shown(), style = MaterialTheme.typography.labelLarge)
+        val opener = LocalPrayerOpener.current
+        ContextMenuBox(
+            listOf(
+                MenuAction(Str.MenuDetails.t()) { opener?.invoke(p) },
+                MenuAction(Str.MenuReminderOff.t()) { s.setNotify(p, false) },
+                MenuAction(Str.MenuResetReminder.t()) { s.setOffset(p, 0); s.setSound(p, dev.falah.core.Sounds.DEFAULT) },
+            ),
+            Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+        ) { Text(p.shown(), Modifier.padding(vertical = 12.dp), style = MaterialTheme.typography.labelLarge) }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(0, 5, 10, 15, 30).forEach { m -> FilterChip(s.offsetOf(p) == m, { s.setOffset(p, m) }, { Text(if (m == 0) Str.AtTheTime.t() else Str.MinBefore.t(m)) }) } }
     }
     Text(Str.NoticeOption.t(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
