@@ -8,6 +8,10 @@ interface Platform {
     fun ensureNotifications(done: (Boolean) -> Unit)
     /** Sets the next alarm from the saved place, method and chosen prayers (or cancels it when none is chosen). */
     fun reschedule()
+    /** Whether the phone can find its own position. */
+    val canLocate: Boolean get() = false
+    /** Asks for the location permission if needed (the app has already explained why), then for one position. */
+    fun requestLocation(done: (dev.falah.core.LocationFix) -> Unit) { done(dev.falah.core.LocationFix.Unavailable) }
     /** Hides the notification of [prayer] and shows it again in [minutes]. */
     fun snooze(prayer: dev.falah.core.Prayer, minutes: Int, prayerAtMillis: Long) {}
     /** Hides the notification of [prayer]. */

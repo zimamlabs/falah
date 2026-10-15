@@ -69,14 +69,26 @@ fun Page(content: @Composable () -> Unit) {
 fun PlacePicker(s: FalahState) {
     var menu by remember { mutableStateOf(false) }
     var custom by remember { mutableStateOf(false) }
+    var askLocation by remember { mutableStateOf(false) }
     Box {
-        OutlinedButton({ menu = true }) { Icon16(); Text(" ${placeShown(s.placeName)}") }
+        OutlinedButton({ menu = true }, Modifier.testTag("place-picker")) { Icon16(); Text(" ${placeShown(s.placeName)}") }
         DropdownMenu(menu, { menu = false }) {
             Places.forEach { p -> DropdownMenuItem(text = { Text(p.shown()) }, onClick = { menu = false; s.choosePlace(p) }) }
+            if (s.platform.canLocate) DropdownMenuItem(text = { Text(Str.UseLocation.t()) }, onClick = { menu = false; askLocation = true })
             DropdownMenuItem(text = { Text(Str.CustomPlaceMenu.t()) }, onClick = { menu = false; custom = true })
         }
     }
     if (!s.placeChosen) Text(Str.PlaceNotChosen.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+    else Text(if (s.settings.placeSource == dev.falah.core.PlaceSource.Gps) Str.PlaceFromGps.t() else Str.PlaceChosenByYou.t(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    if (s.locating) Text(Str.LocationFinding.t(), style = MaterialTheme.typography.bodySmall)
+    s.locationProblem?.let { problem -> Text(when (problem) { dev.falah.core.LocationFix.Denied -> Str.LocationDenied; dev.falah.core.LocationFix.TimedOut -> Str.LocationTimedOut; else -> Str.LocationUnavailable }.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+    if (askLocation) AlertDialog(
+        onDismissRequest = { askLocation = false },
+        title = { Text(Str.LocationAskTitle.t()) },
+        text = { Text(Str.LocationAskBody.t() + "\n\n" + Str.LocationZoneNote.t()) },
+        confirmButton = { TextButton({ askLocation = false; s.useLocation() }) { Text(Str.LocationContinue.t()) } },
+        dismissButton = { TextButton({ askLocation = false }) { Text(Str.LocationNotNow.t()) } },
+    )
     if (custom) CustomPlaceDialog(s) { custom = false }
 }
 

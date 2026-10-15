@@ -24,6 +24,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import dev.falah.core.Compass
+import dev.falah.core.LocationFix
 import dev.falah.core.NoticeRoute
 import dev.falah.core.PrayerNotice
 import dev.falah.core.ReminderProblem
@@ -43,6 +44,39 @@ class MainActivity : ComponentActivity() {
         }
         soundDone = null
     }
+    private var locationDone: ((LocationFix) -> Unit)? = null
+    private val locationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
+        if (granted.values.any { it }) findPosition() else finishLocation(LocationFix.Denied)
+    }
+
+    private fun finishLocation(fix: LocationFix) { locationDone?.invoke(fix); locationDone = null }
+
+    /** One position, from a recent stored fix when there is one, otherwise a single fresh update with a 30 second limit. */
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun findPosition() {
+        val lm = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val providers = (if (fine) listOf(android.location.LocationManager.GPS_PROVIDER) else emptyList()) + android.location.LocationManager.NETWORK_PROVIDER
+        val enabled = providers.filter { runCatching { lm.isProviderEnabled(it) }.getOrDefault(false) }
+        val stored = (providers + android.location.LocationManager.PASSIVE_PROVIDER).mapNotNull { runCatching { lm.getLastKnownLocation(it) }.getOrNull() }.maxByOrNull { it.time }
+        if (stored != null && System.currentTimeMillis() - stored.time < 10 * 60_000L) { finishLocation(LocationFix.Found(stored.latitude, stored.longitude)); return }
+        if (enabled.isEmpty()) { finishLocation(stored?.let { LocationFix.Found(it.latitude, it.longitude) } ?: LocationFix.Unavailable); return }
+        val handler = android.os.Handler(mainLooper)
+        var finished = false
+        fun done(fix: LocationFix) { if (!finished) { finished = true; handler.removeCallbacksAndMessages(null); finishLocation(fix) } }
+        handler.postDelayed({ done(stored?.let { LocationFix.Found(it.latitude, it.longitude) } ?: LocationFix.TimedOut) }, 30_000)
+        val provider = enabled.first()
+        runCatching {
+            if (Build.VERSION.SDK_INT >= 30) lm.getCurrentLocation(provider, null, mainExecutor) { loc -> done(loc?.let { LocationFix.Found(it.latitude, it.longitude) } ?: LocationFix.TimedOut) }
+            else @Suppress("DEPRECATION") lm.requestSingleUpdate(provider, object : android.location.LocationListener {
+                override fun onLocationChanged(location: android.location.Location) = done(LocationFix.Found(location.latitude, location.longitude))
+                @Deprecated("old callback") override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+                override fun onProviderEnabled(provider: String) {}
+                override fun onProviderDisabled(provider: String) {}
+            }, mainLooper)
+        }.onFailure { done(LocationFix.Unavailable) }
+    }
+
     private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> pending?.invoke(granted); pending = null }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,6 +116,12 @@ class MainActivity : ComponentActivity() {
                     ReminderProblem.BatteryOptimised -> Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                 }
                 runCatching { startActivity(intent) }.onFailure { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)) }
+            }
+            override val canLocate = true
+            override fun requestLocation(done: (LocationFix) -> Unit) {
+                locationDone = done
+                val granted = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).any { ContextCompat.checkSelfPermission(this@MainActivity, it) == PackageManager.PERMISSION_GRANTED }
+                if (granted) findPosition() else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
             }
             override val canPickSound = true
             override fun pickSound(current: String, done: (String) -> Unit) {
