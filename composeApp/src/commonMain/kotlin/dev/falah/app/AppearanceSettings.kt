@@ -12,7 +12,15 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import kotlin.math.roundToInt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,8 +44,9 @@ import dev.falah.core.ThemeMode
 @Composable
 fun AppearanceControls(s: FalahState) {
     val dark = when (s.themeMode) { ThemeMode.Dark -> true; ThemeMode.Light -> false; ThemeMode.System -> androidx.compose.foundation.isSystemInDarkTheme() }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(ThemeMode.System to Str.ThemeSystem, ThemeMode.Light to Str.ThemeLight, ThemeMode.Dark to Str.ThemeDark).forEach { (k, v) -> FilterChip(s.themeMode == k, { s.chooseTheme(k) }, { Text(v.t()) }) }
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        val modes = listOf(ThemeMode.System to Str.ThemeSystem, ThemeMode.Light to Str.ThemeLight, ThemeMode.Dark to Str.ThemeDark)
+        modes.forEachIndexed { i, (k, v) -> SegmentedButton(s.themeMode == k, { s.chooseTheme(k) }, SegmentedButtonDefaults.itemShape(i, modes.size)) { Text(v.t()) } }
     }
     Label(Str.ColourTheme.t())
     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -52,14 +61,18 @@ fun AppearanceControls(s: FalahState) {
         }
     }
     Label(Str.TextSizeTitle.t())
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { TextSize.entries.forEach { t -> FilterChip(s.settings.textSize == t, { s.chooseTextSize(t) }, { Text(t.label().t()) }) } }
-    Text(Str.TextPreview.t(), style = MaterialTheme.typography.bodyLarge)
+    val steps = TextSize.entries
+    val sliderLabel = Str.TextSizeTitle.t()
+    Slider(steps.indexOf(s.settings.textSize).toFloat(), { s.chooseTextSize(steps[it.roundToInt().coerceIn(0, steps.lastIndex)]) }, Modifier.semantics { contentDescription = sliderLabel }, valueRange = 0f..steps.lastIndex.toFloat(), steps = steps.size - 2)
+    Text(s.settings.textSize.label().t(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    FalahCard(container = MaterialTheme.colorScheme.surfaceContainerHigh) { Text(Str.TextPreview.t(), style = MaterialTheme.typography.bodyLarge) }
     Label(Str.DensityTitle.t())
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Density.entries.forEach { d -> FilterChip(s.settings.density == d, { s.chooseDensity(d) }, { Text(d.label().t()) }) } }
-    Label(Str.MotionTitle.t())
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(!s.settings.reduceMotion, { s.chooseReduceMotion(false) }, { Text(Str.MotionFull.t()) })
-        FilterChip(s.settings.reduceMotion, { s.chooseReduceMotion(true) }, { Text(Str.MotionReduced.t()) })
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        Density.entries.forEachIndexed { i, d -> SegmentedButton(s.settings.density == d, { s.chooseDensity(d) }, SegmentedButtonDefaults.itemShape(i, Density.entries.size)) { Text(d.label().t()) } }
+    }
+    Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = LocalSpacing.current.rowMinHeight), verticalAlignment = Alignment.CenterVertically) {
+        Text(Str.MotionReduceTitle.t(), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        Switch(s.settings.reduceMotion, { s.chooseReduceMotion(it) })
     }
 }
 

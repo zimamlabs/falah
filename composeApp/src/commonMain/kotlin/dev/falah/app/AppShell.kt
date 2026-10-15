@@ -2,6 +2,21 @@ package dev.falah.app
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import dev.falah.core.BackAction
 import dev.falah.core.Navigation
 import dev.falah.core.Section
+import dev.falah.core.SettingsSection
 import dev.falah.core.Str
 import kotlinx.coroutines.launch
 
@@ -64,6 +80,7 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var sub by remember { mutableStateOf<Tab?>(null) }
+    var settingsPage by remember { mutableStateOf<SettingsSection?>(null) }
 
     // Keep the same section on screen when the user shows or hides sections in Settings.
     var shown by remember { mutableStateOf(sections) }
@@ -80,11 +97,12 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
             if (page >= 0) { if (reduceMotion) pager.scrollToPage(page) else pager.animateScrollToPage(page) }
         }
     }
-    fun open(tab: Tab) { tab.section?.let(::goTo) ?: run { sub = tab; scope.launch { drawer.close() } } }
+    fun open(tab: Tab) { tab.section?.let(::goTo) ?: run { sub = tab; if (tab == Tab.Settings) settingsPage = null; scope.launch { drawer.close() } } }
 
     PlatformBackHandler(enabled = drawer.isOpen || sub != null || current != Section.Home) {
-        when (Navigation.back(drawer.isOpen, sub != null, current)) {
+        when (Navigation.back(drawer.isOpen, sub != null, current, inSettingsSection = sub == Tab.Settings && settingsPage != null)) {
             BackAction.CloseDrawer -> scope.launch { drawer.close() }
+            BackAction.LeaveSettingsSection -> settingsPage = null
             BackAction.LeaveSubScreen -> sub = if (sub == Tab.About) Tab.Settings else null
             BackAction.GoHome -> goTo(Section.Home)
             BackAction.Exit -> Unit
@@ -95,11 +113,11 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
         drawerContent = { MenuSheet(sections, current.takeIf { sub == null }, sub, ::open, { scope.launch { drawer.close() }; showWhatsNew() }, { scope.launch { drawer.close() }; showTour() }) },
         drawerState = drawer,
         // Swiping in from the edge opens the menu on the first page only; on other pages a swipe moves between sections.
-        gesturesEnabled = drawer.isOpen || (pager.currentPage == 0 && sub == null),
+        gesturesEnabled = drawer.isOpen,
     ) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            topBar = { TopBar(sub?.label ?: Tab.of(current).label, { scope.launch { drawer.open() } }) },
+            topBar = { TopBar(if (sub == Tab.Settings) settingsPage?.title() ?: Str.TabSettings else sub?.label ?: Tab.of(current).label, { scope.launch { drawer.open() } }) },
             bottomBar = {
                 NavigationBar(Modifier.testTag(BOTTOM_BAR_TAG), containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                     sections.forEach { sec ->
@@ -113,8 +131,9 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
             Column(Modifier.padding(inner)) {
                 if (state.unreadable.isNotEmpty() || state.saveFailed) StorageBanner(state)
                 Box(Modifier.weight(1f)) {
+                    if (sub == null && pager.currentPage == 0) DrawerEdge { scope.launch { drawer.open() } }
                     when (sub) {
-                        Tab.Settings -> SettingsPage(state) { sub = Tab.About }
+                        Tab.Settings -> SettingsPage(state, settingsPage, { settingsPage = it }) { sub = Tab.About }
                         Tab.About -> AboutPage(state, showTour)
                         else -> HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 1, key = { sections[it].key }) { page ->
                             SectionPage(sections[page], state, resumed, active = page == pager.currentPage, hiddenNotes, hideNotes, sections, ::open)
@@ -154,23 +173,52 @@ private fun StorageBanner(state: FalahState) {
     )
 }
 
+/** The side menu, in the order of the shared Zimam spec: header, sections, divider, Settings, What's new, Tour, About, footer. */
 @Composable
 private fun MenuSheet(sections: List<Section>, current: Section?, sub: Tab?, open: (Tab) -> Unit, whatsNew: () -> Unit, tour: () -> Unit) {
-    ModalDrawerSheet {
-        Column(Modifier.padding(horizontal = 24.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            BrandMark(Modifier.size(56.dp))
-            Text(Str.AppName.t(), style = MaterialTheme.typography.titleLarge)
-            Text(Str.AboutTagline.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surfaceContainer) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) { BrandMark(Modifier.size(40.dp)) }
+                Column {
+                    Text(Str.AppName.t(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                    Text(Str.MenuByZimam.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    Text(Str.VersionLine.t(APP_VERSION), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            sections.forEach { sec -> val t = Tab.of(sec); MenuItem(t.label.t(), t.icon, current == sec) { open(t) } }
+            HorizontalDivider(Modifier.padding(vertical = 8.dp, horizontal = 16.dp))
+            MenuItem(Str.TabSettings.t(), Tab.Settings.icon, sub == Tab.Settings) { open(Tab.Settings) }
+            MenuItem(Str.MenuWhatsNew.t(), Icons.Rounded.NewReleases, false, whatsNew)
+            MenuItem(Str.ShowTour.t(), Icons.Rounded.PlayCircle, false, tour)
+            MenuItem(Str.TabAbout.t(), Tab.About.icon, sub == Tab.About) { open(Tab.About) }
+            Text(Str.MenuFooter.t(), Modifier.padding(horizontal = 28.dp, vertical = 16.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        val colors = NavigationDrawerItemDefaults.colors()
-        sections.forEach { sec ->
-            val t = Tab.of(sec)
-            NavigationDrawerItem({ Text(t.label.t()) }, current == sec, { open(t) }, Modifier.padding(NavigationDrawerItemDefaults.ItemPadding), icon = { Icon(t.icon, null) }, colors = colors)
-        }
-        HorizontalDivider(Modifier.padding(vertical = 8.dp, horizontal = 24.dp))
-        NavigationDrawerItem({ Text(Str.TabSettings.t()) }, sub == Tab.Settings, { open(Tab.Settings) }, Modifier.padding(NavigationDrawerItemDefaults.ItemPadding), icon = { Icon(Tab.Settings.icon, null) })
-        NavigationDrawerItem({ Text(Str.TabAbout.t()) }, sub == Tab.About, { open(Tab.About) }, Modifier.padding(NavigationDrawerItemDefaults.ItemPadding), icon = { Icon(Tab.About.icon, null) })
-        NavigationDrawerItem({ Text(Str.MenuWhatsNew.t()) }, false, whatsNew, Modifier.padding(NavigationDrawerItemDefaults.ItemPadding), icon = { Icon(Icons.Rounded.NewReleases, null) })
-        NavigationDrawerItem({ Text(Str.ShowTour.t()) }, false, tour, Modifier.padding(NavigationDrawerItemDefaults.ItemPadding), icon = { Icon(Icons.Rounded.PlayCircle, null) })
     }
+}
+
+@Composable
+private fun MenuItem(label: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) = NavigationDrawerItem(
+    { Text(label) }, selected, onClick, Modifier.padding(horizontal = 16.dp).heightIn(min = 56.dp), icon = { Icon(icon, null) },
+    colors = NavigationDrawerItemDefaults.colors(selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f), selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary),
+)
+
+/**
+ * The pager takes every horizontal swipe, so on the first section a thin strip at the start edge opens the menu
+ * (the menu button always works). The strip sits on the side the reading direction starts from.
+ */
+@Composable
+private fun BoxScope.DrawerEdge(onOpen: () -> Unit) {
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val threshold = with(LocalDensity.current) { 40.dp.toPx() }
+    Box(
+        Modifier.align(Alignment.CenterStart).width(24.dp).fillMaxHeight().pointerInput(rtl) {
+            var dragged = 0f
+            detectHorizontalDragGestures(onDragStart = { dragged = 0f }, onDragEnd = { dragged = 0f }) { change, amount ->
+                change.consume()
+                dragged += if (rtl) -amount else amount
+                if (dragged > threshold) { dragged = Float.NEGATIVE_INFINITY; onOpen() }
+            }
+        },
+    )
 }

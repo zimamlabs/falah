@@ -121,6 +121,14 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     fun chooseTextSize(t: dev.falah.core.TextSize) = update { copy(textSize = t) }
     fun chooseDensity(d: dev.falah.core.Density) = update { copy(density = d) }
     fun chooseReduceMotion(on: Boolean) = update { copy(reduceMotion = on) }
+    /** Shows or hides a section; Home cannot be hidden. A newly shown section goes last. */
+    fun showSection(section: dev.falah.core.Section, show: Boolean) = update { withSections(if (show) sections + section else sections - section) }
+    /** Moves a shown section one place earlier (-1) or later (+1); Home stays first. */
+    fun moveSection(section: dev.falah.core.Section, by: Int) = update {
+        val list = sections.toMutableList(); val from = list.indexOf(section); val to = from + by
+        if (section == dev.falah.core.Section.Home || from < 0 || to < 1 || to > list.lastIndex) this else { list.add(to, list.removeAt(from)); withSections(list) }
+    }
+    fun chooseStart(section: dev.falah.core.Section) = update { if (section in sections) copy(startSection = section) else this }
     fun chooseLanguage(choice: String) = update { copy(language = choice) }
     fun chooseDigits(arabic: Boolean) = update { copy(arabicDigits = arabic) }
     fun chooseHijriAdjust(days: Int) = update { copy(hijriAdjust = days) }

@@ -57,7 +57,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 
 @Composable
-private fun Page(content: @Composable () -> Unit) {
+fun Page(content: @Composable () -> Unit) {
     val sp = LocalSpacing.current
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = sp.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(sp.cardGap)) { content() }
 }
@@ -135,52 +135,11 @@ fun TimesPage(s: FalahState) = Page {
     Text(Str.TimesDisclaimer.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsPage(s: FalahState, openAbout: () -> Unit) = Page {
-    Text(Str.TabSettings.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-    FalahCard {
-        SectionTitle(Icons.Rounded.Place, Str.SettingsPlace.t())
-        PlacePicker(s)
-    }
-    FalahCard {
-        SectionTitle(Icons.Rounded.Tune, Str.SettingsCalc.t())
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Method.entries.forEach { m -> FilterChip(s.method == m, { s.chooseMethod(m) }, { Text(m.shown()) }) } }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { AsrFactor.entries.forEach { a -> FilterChip(s.asr == a, { s.chooseAsr(a) }, { Text(Str.AsrLine.t(a.shown())) }) } }
-        Text(Str.HijriAdjust.t(), style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(-1, 0, 1).forEach { d -> FilterChip(s.hijriAdjust == d, { s.chooseHijriAdjust(d) }, { Text(if (d > 0) Str.DayPlus.t(d) else if (d < 0) Str.DayMinus.t(-d) else Str.NoneOpt.t()) }) } }
-        Text(Str.MoonNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    if (s.platform.canNotify) FalahCard {
-        SectionTitle(Icons.Rounded.Notifications, Str.NotifyAt.t())
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Prayer.entries.filter { it != Prayer.Sunrise }.forEach { p -> FilterChip(s.notifyOn(p), { s.setNotify(p, !s.notifyOn(p)) }, { Text(p.shown()) }) } }
-        Text(Str.NotifyNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Prayer.entries.filter { it != Prayer.Sunrise && s.notifyOn(it) }.forEach { p ->
-            Text(p.shown(), style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(0, 5, 10, 15, 30).forEach { m -> FilterChip(s.offsetOf(p) == m, { s.setOffset(p, m) }, { Text(if (m == 0) Str.AtTheTime.t() else Str.MinBefore.t(m)) }) } }
-        }
-    }
-    FalahCard {
-        SectionTitle(Icons.Rounded.Palette, Str.Appearance.t())
-        AppearanceControls(s)
-    }
-    FalahCard {
-        SectionTitle(Icons.Rounded.Translate, Str.LanguageTitle.t())
-        LanguageChips(s)
-    }
-    DataCard(s)
-    FalahCard(onClick = openAbout) {
-        SectionTitle(Icons.Rounded.Info, Str.AboutCardTitle.t(), Str.VersionLine.t(APP_VERSION))
-        Text(Str.AboutCardText.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun DataCard(s: FalahState) {
+fun DataCardBody(s: FalahState) {
     var tick by remember { mutableStateOf(0) }
     var confirm by remember { mutableStateOf(false) }
-    FalahCard {
-        SectionTitle(Icons.Rounded.Folder, Str.YourData.t())
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(if (s.files.shared) Str.KeptShared.t() else Str.KeptPrivate.t(), style = MaterialTheme.typography.bodyMedium)
         Text(s.files.location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(Str.DataNote.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
