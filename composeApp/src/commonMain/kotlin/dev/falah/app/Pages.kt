@@ -41,7 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.KeyboardType
 import dev.falah.core.AsrFactor
+import dev.falah.core.CoordinateError
+import dev.falah.core.CoordinateResult
+import dev.falah.core.Coordinates
 import dev.falah.core.Method
 import dev.falah.core.Prayer
 import dev.falah.core.PrayerTimes
@@ -57,12 +63,53 @@ private fun Page(content: @Composable () -> Unit) {
 @Composable
 fun PlacePicker(s: FalahState) {
     var menu by remember { mutableStateOf(false) }
+    var custom by remember { mutableStateOf(false) }
     Box {
         OutlinedButton({ menu = true }) { Icon16(); Text(" ${placeShown(s.placeName)}") }
         DropdownMenu(menu, { menu = false }) {
             Places.forEach { p -> DropdownMenuItem(text = { Text(p.shown()) }, onClick = { menu = false; s.choosePlace(p) }) }
+            DropdownMenuItem(text = { Text(Str.CustomPlaceMenu.t()) }, onClick = { menu = false; custom = true })
         }
     }
+    if (!s.placeChosen) Text(Str.PlaceNotChosen.t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+    if (custom) CustomPlaceDialog(s) { custom = false }
+}
+
+@Composable
+private fun CustomPlaceDialog(s: FalahState, close: () -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var lat by remember { mutableStateOf("") }
+    var lon by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<CoordinateError?>(null) }
+    AlertDialog(
+        onDismissRequest = close,
+        title = { Text(Str.CustomPlaceTitle.t()) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(Str.CustomPlaceHint.t(), style = MaterialTheme.typography.bodySmall)
+                OutlinedTextField(name, { name = it }, label = { Text(Str.CustomPlaceName.t()) }, singleLine = true)
+                OutlinedTextField(lat, { lat = it; error = null }, label = { Text(Str.Latitude.t()) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text))
+                OutlinedTextField(lon, { lon = it; error = null }, label = { Text(Str.Longitude.t()) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text))
+                error?.let { Text(it.message().t(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = {
+            TextButton({
+                when (val r = Coordinates.parse(lat, lon)) {
+                    is CoordinateResult.Ok -> { s.chooseCustomPlace(name, r.latitude, r.longitude); close() }
+                    is CoordinateResult.Bad -> error = r.error
+                }
+            }) { Text(Str.UsePlace.t()) }
+        },
+        dismissButton = { TextButton(close) { Text(Str.Cancel.t()) } },
+    )
+}
+
+private fun CoordinateError.message() = when (this) {
+    CoordinateError.Empty -> Str.CoordEmpty
+    CoordinateError.NotANumber -> Str.CoordNotNumber
+    CoordinateError.LatitudeRange -> Str.CoordLatRange
+    CoordinateError.LongitudeRange -> Str.CoordLonRange
 }
 
 @Composable
