@@ -3,6 +3,7 @@ package dev.falah.core
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -47,12 +48,17 @@ class ReferenceTimesTest {
         worst.forEach { (p, w) -> assertTrue(w.first <= TOLERANCE_MINUTES, "$p is ${w.first} minutes off in ${w.second}") }
     }
 
+    @Test fun ummAlQuraIshaIsTwoHoursAfterMaghribInRamadanAndNinetyMinutesAfter() {
+        fun gap(date: String) = rows().single { it.city == "Makkah" && it.date == LocalDate.parse(date) }.let { r -> PrayerTimes.compute(r.date, r.lat, r.lon, r.offset, r.method).let { (it.isha!! - it.maghrib!!) * 60 } }
+        assertEquals(120.0, gap("2027-02-20"), 0.001); assertEquals(90.0, gap("2027-03-20"), 0.001)
+    }
+
     @Test fun whereTheReferenceHasNoFajrOrIshaTheAppHasNoneEither() {
         val london = rows().single { it.city == "London" && it.date.monthNumber == 6 }
         val t = PrayerTimes.compute(london.date, london.lat, london.lon, london.offset, london.method)
         assertTrue(london.minutes[Prayer.Fajr] == null && t.fajr == null && t.isha == null)
     }
 
-    // Measured worst case 2.09 (Isha, London 2026-09-23); tighten when the algorithm improves.
-    private companion object { const val TOLERANCE_MINUTES = 2.5 }
+    // Measured worst case 0.05 minutes (3 seconds) after the event-time fix; it was 2.09 before (Isha, London 2026-09-23).
+    private companion object { const val TOLERANCE_MINUTES = 0.2 }
 }
