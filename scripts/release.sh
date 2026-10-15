@@ -13,7 +13,7 @@ VERSION="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' composeApp/build.gradle.kt
 : "${VERSION:?could not read versionName}"
 [ -n "${FALAH_KEYSTORE:-}" ] || echo "note: FALAH_KEYSTORE is not set, the APKs will be unsigned" >&2
 
-./gradlew --no-daemon :shared:desktopTest :composeApp:assembleRelease
+./gradlew --no-daemon :shared:desktopTest :composeApp:desktopTest :composeApp:assembleRelease
 
 OUT="dist/$VERSION"
 rm -rf "$OUT"; mkdir -p "$OUT"

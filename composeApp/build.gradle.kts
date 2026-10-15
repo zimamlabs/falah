@@ -96,7 +96,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
             packageName = "falah"
-            packageVersion = "1.0.0"
+            packageVersion = "0.5.0"
             description = "Prayer times, reminders and the qibla"
             vendor = "Zimam"
             linux {
