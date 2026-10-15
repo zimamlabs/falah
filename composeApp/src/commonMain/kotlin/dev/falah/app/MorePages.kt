@@ -203,13 +203,13 @@ fun TasbihPage(s: FalahState) {
 
 /** Qibla with a live compass when the phone has one; otherwise the fixed bearing from north. */
 @Composable
-fun CompassPage(s: FalahState, resumed: Int) {
+fun CompassPage(s: FalahState, resumed: Int, active: Boolean = true) {
     val qibla = PrayerTimes.qibla(s.lat, s.lon)
     val hasCompass = s.platform.hasCompass
     var heading by remember { mutableStateOf<Double?>(null) }
     var accuracy by remember { mutableStateOf(3) }
-    DisposableEffect(resumed, hasCompass, s.lat, s.lon) {
-        if (hasCompass) s.platform.startCompass(s.lat, s.lon) { h, a -> heading = Compass.smooth(heading, h); accuracy = a }
+    DisposableEffect(resumed, hasCompass, active, s.lat, s.lon) {
+        if (hasCompass && active) s.platform.startCompass(s.lat, s.lon) { h, a -> heading = Compass.smooth(heading, h); accuracy = a }
         onDispose { s.platform.stopCompass() }
     }
     val relative = heading?.let { Compass.relative(qibla, it) }

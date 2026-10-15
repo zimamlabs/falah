@@ -41,15 +41,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.falah.core.Onboarding
 import dev.falah.core.ReleaseNotes
+import dev.falah.core.Section
 import dev.falah.core.Welcome
+import androidx.compose.material.icons.rounded.Info
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
 const val APP_VERSION = "0.5.1"
 
-enum class Tab(val label: Str, val icon: ImageVector) {
-    Home(Str.TabHome, Icons.Rounded.Home), Times(Str.TabTimes, Icons.Rounded.Schedule), Qibla(Str.TabQibla, Icons.Rounded.Explore), Tasbih(Str.TabTasbih, Icons.Rounded.TouchApp), Log(Str.TabLog, Icons.Rounded.CalendarMonth),
-    Settings(Str.TabSettings, Icons.Rounded.Settings), About(Str.TabAbout, Icons.Rounded.Settings), // reached from Home and Settings, not shown in the bar
+/** The places the app can show: the five sections in the pager, plus Settings and About reached from the menu. */
+enum class Tab(val label: Str, val icon: ImageVector, val section: Section?) {
+    Home(Str.TabHome, Icons.Rounded.Home, Section.Home), Times(Str.TabTimes, Icons.Rounded.Schedule, Section.Times), Qibla(Str.TabQibla, Icons.Rounded.Explore, Section.Qibla),
+    Tasbih(Str.TabTasbih, Icons.Rounded.TouchApp, Section.Tasbih), Log(Str.TabLog, Icons.Rounded.CalendarMonth, Section.Log),
+    Settings(Str.TabSettings, Icons.Rounded.Settings, null), About(Str.TabAbout, Icons.Rounded.Info, null);
+
+    companion object { fun of(section: Section) = entries.first { it.section == section } }
 }
 
 /** [resumed] changes each time the app comes back to the front, so the data folder can be picked again after the permission screen. */
@@ -69,45 +75,19 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
         LocalLayoutDirection provides if (language == Lang.Ar) LayoutDirection.Rtl else LayoutDirection.Ltr,
     ) { FalahTheme(state.settings) {
         var splash by remember { mutableStateOf(showSplash) }
-        var tab by remember { mutableStateOf(Tab.Home) }
         var welcome by remember {
             mutableStateOf(Onboarding.decide(prefs.get("seen.version").orEmpty(), prefs.get("tour.done") == "1", prefs.get("place") != null || prefs.get("notify.Fajr") != null, APP_VERSION))
         }
         var tourAgain by remember { mutableStateOf(false) }
         var hiddenNotes by remember { mutableStateOf(prefs.get("notes.hidden") == APP_VERSION) }
         fun finishTour() { prefs.set("tour.done", "1"); prefs.set("seen.version", APP_VERSION); welcome = Welcome.Nothing; tourAgain = false }
-        PlatformBackHandler(enabled = tab != Tab.Home && !tourAgain) { tab = if (tab == Tab.About) Tab.Settings else Tab.Home }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            if (welcome == Welcome.Tour || tourAgain) Tour(state, ::finishTour)
-            else Scaffold(
-                containerColor = MaterialTheme.colorScheme.background,
-                bottomBar = {
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                        Tab.entries.filter { it != Tab.Settings && it != Tab.About }.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label.t()) }, label = { Text(t.label.t()) }, colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))) }
-                    }
-                },
-            ) { inner ->
-                Column(Modifier.padding(inner)) {
-                if (state.unreadable.isNotEmpty() || state.saveFailed) {
-                    Text(
-                        (if (state.unreadable.isNotEmpty()) Str.DataUnreadable else Str.SaveFailed).t(),
-                        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer).padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                }
-                Box(Modifier.weight(1f)) {
-                    when (tab) {
-                        Tab.Home -> HomePage(state, { tab = it }, hiddenNotes) { hiddenNotes = true; prefs.set("notes.hidden", APP_VERSION) }
-                        Tab.Times -> TimesTab(state)
-                        Tab.Qibla -> CompassPage(state, resumed)
-                        Tab.Tasbih -> TasbihPage(state)
-                        Tab.Log -> LogPage(state)
-                        Tab.Settings -> SettingsPage(state) { tab = Tab.About }
-                        Tab.About -> AboutPage(state) { tourAgain = true }
-                    }
-                }
-                }
-            }
+            if (welcome == Welcome.Tour || tourAgain) { PlatformBackHandler(enabled = tourAgain) { tourAgain = false }; Tour(state, ::finishTour) }
+            else AppShell(
+                state, resumed,
+                hiddenNotes = hiddenNotes, hideNotes = { hiddenNotes = true; prefs.set("notes.hidden", APP_VERSION) },
+                showTour = { tourAgain = true }, showWhatsNew = { welcome = Welcome.WhatsNew },
+            )
             if (welcome == Welcome.WhatsNew && !splash) AlertDialog(
                 onDismissRequest = {},
                 title = { Text(Str.WhatsNewIn.t(APP_VERSION)) },

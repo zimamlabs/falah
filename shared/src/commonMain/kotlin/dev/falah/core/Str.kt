@@ -10,6 +10,8 @@ enum class Str(val en: String, val ar: String) {
     TabQibla("Qibla", "القبلة"),
     TabTasbih("Tasbih", "التسبيح"),
     TabLog("Log", "السجل"),
+    MenuOpen("Open menu", "فتح القائمة"),
+    MenuWhatsNew("What's new", "الجديد"),
     TabSettings("Settings", "الإعدادات"),
     TabAbout("About", "حول"),
     Close("Close", "إغلاق"),
