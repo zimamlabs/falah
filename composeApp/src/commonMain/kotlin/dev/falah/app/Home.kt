@@ -47,23 +47,22 @@ import dev.falah.core.Prayer
 import dev.falah.core.PrayerTimes
 import dev.falah.core.ReleaseNotes
 import dev.falah.core.loggedPrayers
+import dev.falah.core.Section
 import dev.falah.core.of
 
 @Composable
-fun HomePage(s: FalahState, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhatsNew: () -> Unit) {
+fun HomePage(s: FalahState, sections: List<Section>, go: (Tab) -> Unit, whatsNewHidden: Boolean, hideWhatsNew: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         Header(s)
         Hero(s)
         // Four across normally, two by two once text is large so labels never break inside a word.
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.15f) 2 else 4) {
-            ActionTile(Icons.Rounded.Schedule, Str.TabTimes.t(), Modifier.weight(1f)) { go(Tab.Times) }
-            ActionTile(Icons.Rounded.Explore, Str.TabQibla.t(), Modifier.weight(1f)) { go(Tab.Qibla) }
-            ActionTile(Icons.Rounded.TouchApp, Str.TabTasbih.t(), Modifier.weight(1f)) { go(Tab.Tasbih) }
+            (sections - Section.Home).take(3).forEach { sec -> Tab.of(sec).let { t -> ActionTile(t.icon, t.label.t(), Modifier.weight(1f)) { go(t) } } }
             ActionTile(Icons.Rounded.Settings, Str.TabSettings.t(), Modifier.weight(1f)) { go(Tab.Settings) }
         }
         Timeline(s)
         WeekCard(s)
-        QiblaMini(s) { go(Tab.Qibla) }
+        if (Section.Qibla in sections) QiblaMini(s) { go(Tab.Qibla) }
         DuaCard(s)
         if (!whatsNewHidden) WhatsNewCard(hideWhatsNew)
         Text(Str.HomeFooter.t(APP_VERSION), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
