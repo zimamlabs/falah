@@ -51,8 +51,8 @@ android {
         applicationId = "dev.falah.prayer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.5.1"
+        versionCode = 10
+        versionName = "0.6.0"
     }
     signingConfigs {
         create("release") {
@@ -99,7 +99,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
             packageName = "falah"
-            packageVersion = "0.5.1"
+            packageVersion = "0.6.0"
             description = "Prayer times, reminders and the qibla"
             vendor = "Zimam"
             linux {

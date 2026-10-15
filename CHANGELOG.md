@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0
+
+- **Navigation.** Swipe between Home, Times, Qibla, Tasbih and Log; a side menu (mark, sections, Settings, What's new, Tour, About); Back closes the menu, leaves Settings, returns Home, then exits.
+- **Settings as a list of sections:** Appearance (mode, six colour themes, text size with preview, spacing, reduce animations), Sections and layout (show, hide, reorder, start section), Language, Notifications and reminders, Calculation, Your data, Privacy and security. Settings are one typed object; keys from 0.5.1 are read unchanged.
+- **Time to the second.** The countdown to the next prayer reads HH:MM:SS from the system clock without drift and pauses in the background. Any prayer can be moved by up to 30 minutes; the alarm fires on the minute shown.
+- **The prayer notification opens the prayer's screen** (Prayed, Snooze, Skip, Qibla), optionally full screen over the lock screen, with a sound choice per prayer. Tapping a prayer in the list opens the same screen (option). One card, "Reminders may not work", covers notifications off, exact alarms off, full-screen not allowed and battery optimisation. Reminders are not set while no place is chosen, and a late alarm no longer announces a past prayer.
+- **Places.** "Use my location" (GPS, with an explanation and your permission first; approximate is enough), type any latitude and longitude, and a notice instead of a silent Cairo default.
+- **Accuracy.** The sun is positioned at each event (largest difference from an independent precise model 0.05 minutes, was 2.1), Umm al-Qura Isha is 120 minutes in Ramadan, and a high-latitude rule (angle based by default, middle of the night, one seventh, or none) gives London in summer a Fajr and Isha. The invented 05:00 Fajr in the countdown is gone.
+- **Safer saving.** A failed save shows a message; a data file that cannot be read is never overwritten.
+- Android only for now; desktop packages are no longer built. New English and Arabic texts are unreviewed by a native reader.
+
 ## 0.5.1
 
 - **A new app icon.** The launcher icon, splash and in-app mark follow the Zimam family, on a warm dark background.

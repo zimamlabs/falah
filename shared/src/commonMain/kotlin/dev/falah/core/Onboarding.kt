@@ -30,6 +30,13 @@ object Onboarding {
 /** Short notes per version, taken from the changelog; shown once after an update. Each note is English then Arabic. */
 object ReleaseNotes {
     private val notes: Map<String, List<Pair<String, String>>> = mapOf(
+        "0.6.0" to listOf(
+            "Swipe between sections, a side menu, and Settings as a list of sections with six colour themes and a text size." to "اسحب بين الأقسام، وقائمة جانبية، والإعدادات كقائمة أقسام مع ستة ألوان وحجم خط.",
+            "The countdown shows hours, minutes and seconds, and you can move any prayer by a few minutes." to "العدّ التنازلي بالساعات والدقائق والثواني، ويمكنك تحريك أي صلاة بضع دقائق.",
+            "Tap a prayer notification to open that prayer's screen with Prayed, Snooze and Skip, optionally full screen. A card tells you if reminders may not work." to "اضغط على إشعار الصلاة لتفتح شاشتها: صلّيت، غفوة، تخطّي، وبملء الشاشة إن شئت. وتنبّهك بطاقة إن كانت التذكيرات قد لا تعمل.",
+            "Find your place with GPS (with your permission), or type coordinates." to "حدّد مكانك بالـ GPS (بإذنك)، أو اكتب الإحداثيات.",
+            "More accurate times (within seconds of a precise solar model), Isha in Ramadan for Umm al-Qura, and a rule for Fajr and Isha far from the equator." to "مواقيت أدق (خلال ثوانٍ من نموذج شمسي دقيق)، والعشاء في رمضان لأم القرى، وقاعدة للفجر والعشاء بعيدًا عن خط الاستواء.",
+        ),
         "0.5.1" to listOf("A new app icon." to "أيقونة جديدة للتطبيق."),
         "0.5.0" to listOf(
             "An Arabic interface with a right-to-left layout. Choose the language and the digits in Settings." to "واجهة عربية بتخطيط من اليمين إلى اليسار. اختر اللغة والأرقام من الإعدادات.",

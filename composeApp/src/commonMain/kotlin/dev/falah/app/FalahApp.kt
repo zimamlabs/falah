@@ -49,7 +49,7 @@ import androidx.compose.material.icons.rounded.Info
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
-const val APP_VERSION = "0.5.1"
+const val APP_VERSION = "0.6.0"
 
 /** The places the app can show: the five sections in the pager, plus Settings and About reached from the menu. */
 enum class Tab(val label: Str, val icon: ImageVector, val section: Section?) {
