@@ -117,7 +117,7 @@ fun LogPage(s: FalahState) {
     var open by remember { mutableStateOf<LocalDate?>(s.today) }
     val weekStart = if (lang() == Lang.Ar) DayOfWeek.SATURDAY else DayOfWeek.MONDAY
     val (prayed, possible) = s.log.monthTotals(ym.first, ym.second, s.today)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         Text(Str.LogTitle.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         FalahCard {
             MonthHeader(ym.first, ym.second) { y, m -> ym = y to m }
@@ -165,7 +165,7 @@ fun TasbihPage(s: FalahState) {
     var round by remember { mutableStateOf(0) }
     var confirmReset by remember { mutableStateOf(false) }
     val todayCount = s.tasbih.on(s.today, selected.key)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         Text(Str.TasbihTitle.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             dhikrs.forEach { d -> FilterChip(selected == d, { selected = d; round = 0 }, { Text(d.shown()) }) }
@@ -214,7 +214,7 @@ fun CompassPage(s: FalahState, resumed: Int) {
     }
     val relative = heading?.let { Compass.relative(qibla, it) }
     val aligned = relative?.let { Compass.aligned(it) } == true
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = LocalSpacing.current.gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.cardGap)) {
         Text(Str.TabQibla.t(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         PlacePicker(s)
         FalahCard {

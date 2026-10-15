@@ -117,6 +117,10 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     fun chooseMethod(m: Method) = update { copy(method = m) }
     fun chooseAsr(a: AsrFactor) = update { copy(asr = a) }
     fun chooseTheme(mode: ThemeMode) = update { copy(theme = mode) }
+    fun chooseAccent(a: dev.falah.core.Accent) = update { copy(accent = a) }
+    fun chooseTextSize(t: dev.falah.core.TextSize) = update { copy(textSize = t) }
+    fun chooseDensity(d: dev.falah.core.Density) = update { copy(density = d) }
+    fun chooseReduceMotion(on: Boolean) = update { copy(reduceMotion = on) }
     fun chooseLanguage(choice: String) = update { copy(language = choice) }
     fun chooseDigits(arabic: Boolean) = update { copy(arabicDigits = arabic) }
     fun chooseHijriAdjust(days: Int) = update { copy(hijriAdjust = days) }

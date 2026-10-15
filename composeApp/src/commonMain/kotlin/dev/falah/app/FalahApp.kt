@@ -54,7 +54,7 @@ enum class Tab(val label: Str, val icon: ImageVector) {
 
 /** [resumed] changes each time the app comes back to the front, so the data folder can be picked again after the permission screen. */
 @Composable
-fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = MemoryFiles(), resumed: Int = 0) {
+fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = MemoryFiles(), resumed: Int = 0, showSplash: Boolean = true) {
     val state = remember { FalahState(prefs, files, platform) }
     LaunchedEffect(resumed) {
         if (resumed > 0 && files.refresh()) {
@@ -67,8 +67,8 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
     CompositionLocalProvider(
         LocalAppLocale provides AppLocale(language, state.arabicDigits),
         LocalLayoutDirection provides if (language == Lang.Ar) LayoutDirection.Rtl else LayoutDirection.Ltr,
-    ) { FalahTheme(state.themeMode) {
-        var splash by remember { mutableStateOf(true) }
+    ) { FalahTheme(state.settings) {
+        var splash by remember { mutableStateOf(showSplash) }
         var tab by remember { mutableStateOf(Tab.Home) }
         var welcome by remember {
             mutableStateOf(Onboarding.decide(prefs.get("seen.version").orEmpty(), prefs.get("tour.done") == "1", prefs.get("place") != null || prefs.get("notify.Fajr") != null, APP_VERSION))

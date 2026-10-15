@@ -54,6 +54,7 @@ fun FalahCard(
     container: Color = MaterialTheme.colorScheme.surfaceContainer,
     diamond: Boolean = false,
     glowing: Boolean = false,
+    padding: Dp? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = CardDefaults.cardColors(containerColor = container)
@@ -62,7 +63,8 @@ fun FalahCard(
     val shape = MaterialTheme.shapes.large
     val body: @Composable ColumnScope.() -> Unit = {
         Box(if (glowing) Modifier.glow(MaterialTheme.colorScheme.primary) else Modifier) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
+            val sp = LocalSpacing.current
+            Column(Modifier.padding(padding ?: sp.cardPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
             if (diamond) Diamond(Modifier.align(Alignment.TopEnd).padding(14.dp))
         }
     }
@@ -98,7 +100,7 @@ fun Ring(progress: Float, size: Dp, stroke: Dp, track: Color, fill: Color, conte
 
 @Composable
 fun ActionTile(icon: ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    FalahCard(modifier, onClick) {
+    FalahCard(modifier, onClick, padding = 10.dp) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
             Text(label, style = MaterialTheme.typography.labelMedium)
