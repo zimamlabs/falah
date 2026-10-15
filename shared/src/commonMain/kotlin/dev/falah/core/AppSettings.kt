@@ -41,13 +41,26 @@ data class AppSettings(
     val offsets: Map<Prayer, Int> = emptyMap(),
     /** Minutes added to (or taken from) each prayer's time, -30 to 30. */
     val adjust: Map<Prayer, Int> = emptyMap(),
+    /** Tapping a prayer in the list opens that prayer's own screen. */
+    val prayerScreens: Boolean = true,
+    /** The notification sound per prayer: [Sounds.DEFAULT], [Sounds.SILENT], [Sounds.ALARM] or the address of a sound the user picked. */
+    val sounds: Map<Prayer, String> = emptyMap(),
 ) {
+    fun soundOf(p: Prayer): String = sounds[p] ?: Sounds.DEFAULT
+
     fun offsetOf(p: Prayer): Int = offsets[p] ?: 0
 
     fun withSections(chosen: List<Section>): AppSettings {
         val list = (listOf(Section.Home) + chosen.filter { it != Section.Home }).distinct()
         return copy(sections = list, startSection = startSection.takeIf { it in list } ?: Section.Home)
     }
+}
+
+object Sounds {
+    const val DEFAULT = "default"
+    const val SILENT = "silent"
+    const val ALARM = "alarm"
+    fun valid(v: String) = v == DEFAULT || v == SILENT || v == ALARM || v.startsWith("content://") || v.startsWith("file://")
 }
 
 object SettingsCodec {
@@ -77,6 +90,8 @@ object SettingsCodec {
             startSection = pick(Section.entries, "start", { it.key }, d.startSection),
             notify = Prayer.entries.filter { values["notify.${it.name}"] == "1" }.toSet(),
             adjust = Prayer.entries.mapNotNull { p -> values["adjust.${p.name}"]?.toIntOrNull()?.takeIf { it in -30..30 && it != 0 }?.let { p to it } }.toMap(),
+            prayerScreens = values["prayerscreens"] != "0",
+            sounds = Prayer.entries.mapNotNull { p -> values["sound.${p.name}"]?.takeIf { Sounds.valid(it) && it != Sounds.DEFAULT }?.let { p to it } }.toMap(),
             offsets = Prayer.entries.mapNotNull { p -> values["offset.${p.name}"]?.toIntOrNull()?.takeIf { it in reminderOffsets }?.let { p to it } }.toMap(),
         ).let { it.copy(startSection = it.startSection.takeIf { s -> s in it.sections } ?: Section.Home) }
     }
@@ -91,6 +106,8 @@ object SettingsCodec {
         put("sections", s.sections.joinToString(",") { it.key }); put("start", s.startSection.key)
         Prayer.entries.forEach { put("notify.${it.name}", if (it in s.notify) "1" else "0") }
         s.offsets.forEach { (p, m) -> put("offset.${p.name}", m.toString()) }
+        put("prayerscreens", if (s.prayerScreens) "1" else "0")
+        Prayer.entries.forEach { put("sound.${it.name}", s.soundOf(it)) }
         Prayer.entries.forEach { put("adjust.${it.name}", (s.adjust[it] ?: 0).toString()) }
     }
 }

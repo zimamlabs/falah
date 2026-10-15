@@ -49,15 +49,28 @@ object PrayerAlarms {
         else manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.atMillis, intent)
     }
 
+    /** A channel per sound, because Android fixes a channel's sound when it is created. The default channel keeps its old id. */
+    private fun channelFor(sound: String?, name: String): NotificationChannel {
+        val audio = android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build()
+        return when {
+            sound == "silent" -> NotificationChannel("$CHANNEL-silent", name, NotificationManager.IMPORTANCE_HIGH).apply { setSound(null, null) }
+            sound == "alarm" -> NotificationChannel("$CHANNEL-alarm", name, NotificationManager.IMPORTANCE_HIGH).apply { setSound(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM), audio) }
+            sound != null && (sound.startsWith("content://") || sound.startsWith("file://")) ->
+                NotificationChannel("$CHANNEL-${sound.hashCode()}", name, NotificationManager.IMPORTANCE_HIGH).apply { setSound(android.net.Uri.parse(sound), audio) }
+            else -> NotificationChannel(CHANNEL, name, NotificationManager.IMPORTANCE_HIGH)
+        }
+    }
+
     fun notify(context: Context, prayer: Prayer, minutesBefore: Int = 0) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val prefs = context.getSharedPreferences("falah", Context.MODE_PRIVATE)
         val lang = I18n.resolve(prefs.getString("lang", null), java.util.Locale.getDefault().language)
         val arabicDigits = prefs.getString("digits", null) == "ar"
         fun t(s: Str, vararg args: Any?) = I18n.digits(s.text(lang, *args), arabicDigits)
-        manager.createNotificationChannel(NotificationChannel(CHANNEL, t(Str.NotifChannel), NotificationManager.IMPORTANCE_HIGH))
+        val channel = channelFor(prefs.getString("sound.${prayer.name}", null), t(Str.NotifChannel))
+        manager.createNotificationChannel(channel)
         val open = PendingIntent.getActivity(context, 1, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val n = NotificationCompat.Builder(context, CHANNEL)
+        val n = NotificationCompat.Builder(context, channel.id)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(t(Str.NotifTitle, prayer.label, prayer.arabic))
             .setContentText(if (minutesBefore > 0) t(Str.NotifBefore, prayer.title(lang), minutesBefore) else t(Str.NotifNow, prayer.title(lang)))

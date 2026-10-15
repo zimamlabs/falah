@@ -4,6 +4,9 @@ import dev.falah.core.Str
 import dev.falah.core.ThemeMode
 import dev.falah.core.Lang
 import androidx.compose.material.icons.rounded.Translate
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -125,7 +128,8 @@ fun TimesPage(s: FalahState) = Page {
         SectionTitle(Icons.Rounded.Schedule, s.today.longText(), Str.HijriShort.t(s.hijri.day, s.hijri.monthTitle(lang()), s.hijri.year))
         Prayer.entries.forEach { p ->
             val upcoming = !s.next.tomorrow && p == s.next.prayer
-            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            val open = LocalPrayerOpener.current
+            Row(Modifier.testTag("times-row-${p.name}").fillMaxWidth().defaultMinSize(minHeight = LocalSpacing.current.rowMinHeight).then(if (open != null) Modifier.clickable { open(p) } else Modifier).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(p.shown(), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal, color = if (upcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                 p.second()?.let { Text(it, Modifier.padding(end = 16.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 Text(num(PrayerTimes.clock(s.times.of(p)) ?: "--:--"), style = MaterialTheme.typography.titleMedium, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal)

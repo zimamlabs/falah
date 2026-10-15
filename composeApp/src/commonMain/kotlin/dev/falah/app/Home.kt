@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -112,7 +113,7 @@ private fun Timeline(s: FalahState) {
             val upcoming = !s.next.tomorrow && p == s.next.prayer
             val past = t != null && t <= s.hourNow
             Row(
-                Modifier.fillMaxWidth().then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialTheme.shapes.medium) else Modifier).padding(horizontal = 8.dp, vertical = 2.dp),
+                Modifier.fillMaxWidth().then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialTheme.shapes.medium) else Modifier).then(LocalPrayerOpener.current?.let { open -> Modifier.clickable { open(p) } } ?: Modifier).padding(horizontal = 8.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(10.dp).then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primary, CircleShape) else Modifier.border(2.dp, if (past) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.secondary, CircleShape)))
