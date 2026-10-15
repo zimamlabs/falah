@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.falah.core.Onboarding
+import dev.falah.core.PrayerNotice
 import dev.falah.core.ReleaseNotes
 import dev.falah.core.Section
 import dev.falah.core.Welcome
@@ -61,7 +62,7 @@ enum class Tab(val label: Str, val icon: ImageVector, val section: Section?) {
 
 /** [resumed] changes each time the app comes back to the front, so the data folder can be picked again after the permission screen. */
 @Composable
-fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = MemoryFiles(), resumed: Int = 0, showSplash: Boolean = true, active: Boolean = true) {
+fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = MemoryFiles(), resumed: Int = 0, showSplash: Boolean = true, active: Boolean = true, notice: PrayerNotice? = null, onNoticeDone: () -> Unit = {}) {
     val state = remember { FalahState(prefs, files, platform) }
     LaunchedEffect(resumed) {
         if (resumed > 0 && files.refresh()) {
@@ -87,6 +88,7 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
             mutableStateOf(Onboarding.decide(prefs.get("seen.version").orEmpty(), prefs.get("tour.done") == "1", prefs.get("place") != null || prefs.get("notify.Fajr") != null, APP_VERSION))
         }
         var tourAgain by remember { mutableStateOf(false) }
+        var jump by remember { mutableStateOf<Section?>(null) }
         var hiddenNotes by remember { mutableStateOf(prefs.get("notes.hidden") == APP_VERSION) }
         fun finishTour() { prefs.set("tour.done", "1"); prefs.set("seen.version", APP_VERSION); welcome = Welcome.Nothing; tourAgain = false }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -95,7 +97,12 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
                 state, resumed,
                 hiddenNotes = hiddenNotes, hideNotes = { hiddenNotes = true; prefs.set("notes.hidden", APP_VERSION) },
                 showTour = { tourAgain = true }, showWhatsNew = { welcome = Welcome.WhatsNew },
+                jumpTo = jump, jumped = { jump = null },
             )
+            if (notice != null && welcome != Welcome.Tour && !tourAgain) {
+                PlatformBackHandler(enabled = true) { onNoticeDone() }
+                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) { PrayerNoticeScreen(state, notice, { jump = Section.Qibla }, onNoticeDone) }
+            }
             if (welcome == Welcome.WhatsNew && !splash) AlertDialog(
                 onDismissRequest = {},
                 title = { Text(Str.WhatsNewIn.t(APP_VERSION)) },

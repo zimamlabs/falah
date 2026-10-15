@@ -74,7 +74,7 @@ const val BOTTOM_BAR_TAG = "bottomBar"
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: () -> Unit, showTour: () -> Unit, showWhatsNew: () -> Unit) {
+fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: () -> Unit, showTour: () -> Unit, showWhatsNew: () -> Unit, jumpTo: Section? = null, jumped: () -> Unit = {}) {
     val sections = state.settings.sections
     val reduceMotion = state.settings.reduceMotion
     val pager = rememberPagerState(initialPage = Navigation.pageOf(sections, state.settings.startSection)) { sections.size }
@@ -100,6 +100,8 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
         }
     }
     fun open(tab: Tab) { tab.section?.let(::goTo) ?: run { sub = tab; prayerOpen = null; if (tab == Tab.Settings) settingsPage = null; scope.launch { drawer.close() } } }
+
+    LaunchedEffect(jumpTo) { jumpTo?.let { if (it in sections) goTo(it); jumped() } }
 
     PlatformBackHandler(enabled = drawer.isOpen || sub != null || prayerOpen != null || current != Section.Home) {
         when (Navigation.back(drawer.isOpen, sub != null || prayerOpen != null, current, inSettingsSection = sub == Tab.Settings && settingsPage != null)) {
@@ -136,7 +138,7 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
                     if (sub == null && pager.currentPage == 0) DrawerEdge { scope.launch { drawer.open() } }
                     CompositionLocalProvider(LocalPrayerOpener provides if (state.settings.prayerScreens) { p -> prayerOpen = p } else null) {
                     when (if (prayerOpen != null) null else sub) {
-                        Tab.Settings -> SettingsPage(state, settingsPage, { settingsPage = it }) { sub = Tab.About }
+                        Tab.Settings -> SettingsPage(state, resumed, settingsPage, { settingsPage = it }) { sub = Tab.About }
                         Tab.About -> AboutPage(state, showTour)
                         else -> if (prayerOpen != null) PrayerScreen(state, prayerOpen!!) else HorizontalPager(pager, Modifier.fillMaxSize(), beyondViewportPageCount = 1, key = { sections[it].key }) { page ->
                             SectionPage(sections[page], state, resumed, active = page == pager.currentPage, hiddenNotes, hideNotes, sections, ::open)
@@ -152,7 +154,7 @@ fun AppShell(state: FalahState, resumed: Int, hiddenNotes: Boolean, hideNotes: (
 @Composable
 private fun SectionPage(section: Section, state: FalahState, resumed: Int, active: Boolean, hiddenNotes: Boolean, hideNotes: () -> Unit, sections: List<Section>, open: (Tab) -> Unit) {
     when (section) {
-        Section.Home -> HomePage(state, sections, open, hiddenNotes, hideNotes)
+        Section.Home -> HomePage(state, resumed, sections, open, hiddenNotes, hideNotes)
         Section.Times -> TimesTab(state)
         Section.Qibla -> CompassPage(state, resumed, active)
         Section.Tasbih -> TasbihPage(state)

@@ -8,6 +8,14 @@ interface Platform {
     fun ensureNotifications(done: (Boolean) -> Unit)
     /** Sets the next alarm from the saved place, method and chosen prayers (or cancels it when none is chosen). */
     fun reschedule()
+    /** Hides the notification of [prayer] and shows it again in [minutes]. */
+    fun snooze(prayer: dev.falah.core.Prayer, minutes: Int, prayerAtMillis: Long) {}
+    /** Hides the notification of [prayer]. */
+    fun dismissNotification(prayer: dev.falah.core.Prayer) {}
+    /** What may stop reminders from working, or null where there is nothing to check. */
+    fun reminderStatus(): dev.falah.core.ReminderStatus? = null
+    /** Opens the system screen where the user can fix [problem]. */
+    fun openReminderSetting(problem: dev.falah.core.ReminderProblem) {}
     /** Whether the phone can pick a notification sound for a prayer. */
     val canPickSound: Boolean get() = false
     /** Opens the phone's sound picker; [done] gets the chosen sound ([dev.falah.core.Sounds.SILENT] for none), or is not called if the user cancelled. */

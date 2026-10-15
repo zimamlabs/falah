@@ -45,6 +45,12 @@ data class AppSettings(
     val prayerScreens: Boolean = true,
     /** The notification sound per prayer: [Sounds.DEFAULT], [Sounds.SILENT], [Sounds.ALARM] or the address of a sound the user picked. */
     val sounds: Map<Prayer, String> = emptyMap(),
+    /** The prayers that bring up their screen when the time comes (the five prayers by default, not sunrise). Tapping a notification always opens it. */
+    val noticeScreen: Set<Prayer> = loggedPrayers.toSet(),
+    /** True: use a full-screen screen where the phone allows it; false: a normal heads-up notification. */
+    val noticeFullScreen: Boolean = true,
+    /** Minutes the Snooze button waits. */
+    val snoozeMinutes: Int = 10,
 ) {
     fun soundOf(p: Prayer): String = sounds[p] ?: Sounds.DEFAULT
 
@@ -65,6 +71,7 @@ object Sounds {
 
 object SettingsCodec {
     private val reminderOffsets = listOf(0, 5, 10, 15, 30)
+    val snoozeChoices = listOf(5, 10, 15, 20, 30)
 
     fun decode(values: Map<String, String>): AppSettings {
         val d = AppSettings()
@@ -90,6 +97,9 @@ object SettingsCodec {
             startSection = pick(Section.entries, "start", { it.key }, d.startSection),
             notify = Prayer.entries.filter { values["notify.${it.name}"] == "1" }.toSet(),
             adjust = Prayer.entries.mapNotNull { p -> values["adjust.${p.name}"]?.toIntOrNull()?.takeIf { it in -30..30 && it != 0 }?.let { p to it } }.toMap(),
+            noticeScreen = if (values.keys.any { it.startsWith("notice.") && it != "notice.mode" }) Prayer.entries.filter { values["notice.${it.name}"] == "1" }.toSet() else d.noticeScreen,
+            noticeFullScreen = values["notice.mode"] != "heads-up",
+            snoozeMinutes = values["snooze"]?.toIntOrNull()?.takeIf { it in snoozeChoices } ?: d.snoozeMinutes,
             prayerScreens = values["prayerscreens"] != "0",
             sounds = Prayer.entries.mapNotNull { p -> values["sound.${p.name}"]?.takeIf { Sounds.valid(it) && it != Sounds.DEFAULT }?.let { p to it } }.toMap(),
             offsets = Prayer.entries.mapNotNull { p -> values["offset.${p.name}"]?.toIntOrNull()?.takeIf { it in reminderOffsets }?.let { p to it } }.toMap(),
@@ -106,6 +116,8 @@ object SettingsCodec {
         put("sections", s.sections.joinToString(",") { it.key }); put("start", s.startSection.key)
         Prayer.entries.forEach { put("notify.${it.name}", if (it in s.notify) "1" else "0") }
         s.offsets.forEach { (p, m) -> put("offset.${p.name}", m.toString()) }
+        Prayer.entries.forEach { put("notice.${it.name}", if (it in s.noticeScreen) "1" else "0") }
+        put("notice.mode", if (s.noticeFullScreen) "full" else "heads-up"); put("snooze", s.snoozeMinutes.toString())
         put("prayerscreens", if (s.prayerScreens) "1" else "0")
         Prayer.entries.forEach { put("sound.${it.name}", s.soundOf(it)) }
         Prayer.entries.forEach { put("adjust.${it.name}", (s.adjust[it] ?: 0).toString()) }
