@@ -1,1 +1,1 @@
-Icon drafts for Falah. The one in use is `falah-2-mihrab.svg` (copied to `docs/icon.svg`); the rest are kept for later.
+Icon drafts for Falah. Since 0.5.1 the app uses the Zimam family icon; the previous mihrab icon files are in `2026-10-15-mihrab/`. `falah-2-mihrab.svg` was the earlier one; the rest are kept for later.

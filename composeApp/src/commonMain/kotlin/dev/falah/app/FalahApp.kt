@@ -42,7 +42,7 @@ import dev.falah.core.Welcome
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 
-const val APP_VERSION = "0.5.0"
+const val APP_VERSION = "0.5.1"
 
 enum class Tab(val label: Str, val icon: ImageVector) {
     Home(Str.TabHome, Icons.Rounded.Home), Times(Str.TabTimes, Icons.Rounded.Schedule), Qibla(Str.TabQibla, Icons.Rounded.Explore), Tasbih(Str.TabTasbih, Icons.Rounded.TouchApp), Log(Str.TabLog, Icons.Rounded.CalendarMonth),
