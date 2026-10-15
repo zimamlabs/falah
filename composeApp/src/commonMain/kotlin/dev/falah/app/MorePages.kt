@@ -88,7 +88,7 @@ fun TimesTab(s: FalahState) {
 @Composable
 fun TimetablePage(s: FalahState) {
     var ym by remember { mutableStateOf(s.today.year to s.today.monthNumber) }
-    val rows = remember(ym, s.lat, s.lon, s.method, s.asr) { Timetable.month(ym.first, ym.second, TimeZone.currentSystemDefault(), s.lat, s.lon, s.method, s.asr) }
+    val rows = remember(ym, s.lat, s.lon, s.method, s.asr, s.settings.highLatitude) { Timetable.month(ym.first, ym.second, TimeZone.currentSystemDefault(), s.lat, s.lon, s.method, s.asr, s.settings.highLatitude) }
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         MonthHeader(ym.first, ym.second) { y, m -> ym = y to m }
         PlacePicker(s)

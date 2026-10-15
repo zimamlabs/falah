@@ -85,7 +85,7 @@ private fun Header(s: FalahState) {
 
 @Composable
 private fun Hero(s: FalahState) {
-    val n = s.next
+    val n = s.next ?: run { FalahCard { SectionTitle(Icons.Rounded.Schedule, Str.NoNextPrayerTitle.t()); Text(Str.NoNextPrayerBody.t(), style = MaterialTheme.typography.bodyMedium) }; return }
     val left = s.countdown
     FalahCard(container = MaterialTheme.colorScheme.primaryContainer, diamond = true, glowing = true) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -111,7 +111,7 @@ private fun Timeline(s: FalahState) {
         SectionTitle(Icons.Rounded.Today, Str.HomeToday.t(), Str.PrayedOf.t(loggedPrayers.count { s.prayed(it) }))
         Prayer.entries.forEach { p ->
             val t = s.times.of(p)
-            val upcoming = !s.next.tomorrow && p == s.next.prayer
+            val upcoming = s.next?.let { !it.tomorrow && p == it.prayer } == true
             val past = t != null && t <= s.hourNow
             Row(
                 Modifier.fillMaxWidth().then(if (upcoming) Modifier.background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialTheme.shapes.medium) else Modifier).then(LocalPrayerOpener.current?.let { open -> Modifier.clickable { open(p) } } ?: Modifier).padding(horizontal = 8.dp, vertical = 2.dp),

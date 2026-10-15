@@ -12,7 +12,7 @@ import kotlin.math.sin
 import kotlin.math.tan
 
 /** The six times of a day, as hours since local midnight (for example 12.5 is 12:30). A time that does not occur at a high latitude is null. */
-data class DayTimes(val fajr: Double?, val sunrise: Double?, val dhuhr: Double, val asr: Double?, val maghrib: Double?, val isha: Double?)
+data class DayTimes(val fajr: Double?, val sunrise: Double?, val dhuhr: Double, val asr: Double?, val maghrib: Double?, val isha: Double?, val adjusted: Set<Prayer> = emptySet())
 
 enum class Prayer(val label: String, val arabic: String) { Fajr("Fajr", "الفجر"), Sunrise("Sunrise", "الشروق"), Dhuhr("Dhuhr", "الظهر"), Asr("Asr", "العصر"), Maghrib("Maghrib", "المغرب"), Isha("Isha", "العشاء") }
 
@@ -20,7 +20,7 @@ enum class Prayer(val label: String, val arabic: String) { Fajr("Fajr", "الف�
 fun DayTimes.shifted(minutes: Map<Prayer, Int>): DayTimes {
     if (minutes.values.all { it == 0 }) return this
     fun m(p: Prayer, v: Double?) = v?.plus((minutes[p] ?: 0) / 60.0)
-    return DayTimes(m(Prayer.Fajr, fajr), m(Prayer.Sunrise, sunrise), dhuhr + (minutes[Prayer.Dhuhr] ?: 0) / 60.0, m(Prayer.Asr, asr), m(Prayer.Maghrib, maghrib), m(Prayer.Isha, isha))
+    return DayTimes(m(Prayer.Fajr, fajr), m(Prayer.Sunrise, sunrise), dhuhr + (minutes[Prayer.Dhuhr] ?: 0) / 60.0, m(Prayer.Asr, asr), m(Prayer.Maghrib, maghrib), m(Prayer.Isha, isha), adjusted)
 }
 
 fun DayTimes.of(p: Prayer): Double? = when (p) {
@@ -34,6 +34,17 @@ enum class Method(val label: String, val fajrAngle: Double, val ishaAngle: Doubl
     UmmAlQura("Umm al-Qura, Makkah", 18.5, 0.0, 90),
     Karachi("University of Islamic Sciences, Karachi", 18.0, 18.0),
     NorthAmerica("Islamic Society of North America", 15.0, 15.0),
+}
+
+/**
+ * What to do when the sun does not reach the Fajr or Isha angle, or reaches it too close to sunrise or sunset to be a real
+ * dawn or dusk (far from the equator in summer). The rule limits Fajr and Isha to a share of the night; nothing else is invented.
+ */
+enum class HighLatitude(val key: String, val label: String) {
+    None("none", "None (no time when the angle is not reached)"),
+    MiddleOfNight("middle", "Middle of the night (half the night)"),
+    OneSeventh("seventh", "One seventh of the night"),
+    AngleBased("angle", "Angle based (angle divided by 60 of the night)"),
 }
 
 /** The shadow length for Asr: one times the object (most schools) or twice (Hanafi). */
@@ -51,7 +62,7 @@ object PrayerTimes {
      * calculation, not once for the whole day. Umm al-Qura Isha is 120 minutes after Maghrib in Ramadan (tabular Hijri month 9).
      * Measured against an independent solar model: see ReferenceTimesTest.
      */
-    fun compute(date: LocalDate, latitude: Double, longitude: Double, utcOffsetHours: Double, method: Method = Method.Egyptian, asr: AsrFactor = AsrFactor.Standard): DayTimes {
+    fun compute(date: LocalDate, latitude: Double, longitude: Double, utcOffsetHours: Double, method: Method = Method.Egyptian, asr: AsrFactor = AsrFactor.Standard, highLatitude: HighLatitude = HighLatitude.AngleBased): DayTimes {
         val jd0 = julianDay(date)
         fun sunAt(utHours: Double) = sunPosition(jd0 + utHours / 24)
         val meridian = 12 - longitude / 15
@@ -73,14 +84,23 @@ object PrayerTimes {
         val asrAngle = deg(atan(1 / (asr.factor + tan(rad(kotlin.math.abs(latitude - noonDecl))))))
         val maghrib = event(-SUNRISE_ANGLE, true)
         val ishaMinutes = method.ishaAfterMaghribMinutes?.let { if (method == Method.UmmAlQura && Hijri.of(date).month == 9) UMM_AL_QURA_RAMADAN_ISHA_MINUTES else it }
-        return DayTimes(
-            fajr = event(-method.fajrAngle, false),
-            sunrise = event(-SUNRISE_ANGLE, false),
-            dhuhr = noonUt + utcOffsetHours,
-            asr = event(asrAngle, true),
-            maghrib = maghrib,
-            isha = ishaMinutes?.let { m -> maghrib?.plus(m / 60.0) } ?: event(-method.ishaAngle, true),
-        )
+        val sunrise = event(-SUNRISE_ANGLE, false)
+        val fixedIsha = ishaMinutes?.let { m -> maghrib?.plus(m / 60.0) }
+        var fajr = event(-method.fajrAngle, false)
+        var isha = fixedIsha ?: event(-method.ishaAngle, true)
+        val adjusted = mutableSetOf<Prayer>()
+        // The night runs from sunset to the next sunrise (today's sunrise plus a day); without both there is no night to share out.
+        if (highLatitude != HighLatitude.None && sunrise != null && maghrib != null) {
+            val night = sunrise + 24 - maghrib
+            fun share(angle: Double) = night * when (highLatitude) { HighLatitude.MiddleOfNight -> 0.5; HighLatitude.OneSeventh -> 1.0 / 7; else -> angle / 60.0; }
+            val fajrLimit = share(method.fajrAngle)
+            if (fajr == null || sunrise - fajr > fajrLimit) { fajr = sunrise - fajrLimit; adjusted += Prayer.Fajr }
+            if (fixedIsha == null) {
+                val ishaLimit = share(method.ishaAngle)
+                if (isha == null || isha - maghrib > ishaLimit) { isha = maghrib + ishaLimit; adjusted += Prayer.Isha }
+            }
+        }
+        return DayTimes(fajr = fajr, sunrise = sunrise, dhuhr = noonUt + utcOffsetHours, asr = event(asrAngle, true), maghrib = maghrib, isha = isha, adjusted = adjusted)
     }
 
     /** The direction of the Kaaba from here, in degrees clockwise from true north. */

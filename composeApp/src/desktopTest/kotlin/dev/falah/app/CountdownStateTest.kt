@@ -20,10 +20,10 @@ class CountdownStateTest {
     @Test fun afterIshaTheNextPrayerIsTomorrowsFajrAndTheCountdownCrossesMidnight() {
         val s = state(); val isha = s.times.of(Prayer.Isha)!!
         s.now = at(s, isha + 0.5)
-        assertEquals(Prayer.Fajr, s.next.prayer); assertTrue(s.next.tomorrow)
+        assertEquals(Prayer.Fajr, s.next!!.prayer); assertTrue(s.next!!.tomorrow)
         val left = s.secondsLeft()
         assertTrue(left in 3_600..14 * 3_600L, "left was $left")
-        assertEquals(24 * 3600L - Math.round((isha + 0.5) * 3600) + Math.round(s.next.at % 24 * 60) * 60, left, "from now to tomorrow's Fajr minute")
+        assertEquals(24 * 3600L - Math.round((isha + 0.5) * 3600) + Math.round(s.next!!.at % 24 * 60) * 60, left, "from now to tomorrow's Fajr minute")
     }
 
     @Test fun theCountdownIsComputedFromTheTargetSoALateTickChangesNothingButTheClock() {
@@ -36,7 +36,7 @@ class CountdownStateTest {
     @Test fun theCountdownReachesZeroOnTheDisplayedMinute() {
         val s = state(); val asr = s.times.of(Prayer.Asr)!!
         s.now = at(s, Math.round(asr * 60) / 60.0 - 5.0 / 3600)
-        assertEquals(Prayer.Asr, s.next.prayer); assertEquals(5L, s.secondsLeft())
+        assertEquals(Prayer.Asr, s.next!!.prayer); assertEquals(5L, s.secondsLeft())
         assertEquals("00:00:05", s.countdown.text())
     }
 

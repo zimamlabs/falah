@@ -139,7 +139,7 @@ fun TimesPage(s: FalahState) = Page {
     FalahCard {
         SectionTitle(Icons.Rounded.Schedule, s.today.longText(), Str.HijriShort.t(s.hijri.day, s.hijri.monthTitle(lang()), s.hijri.year))
         Prayer.entries.forEach { p ->
-            val upcoming = !s.next.tomorrow && p == s.next.prayer
+            val upcoming = s.next?.let { !it.tomorrow && p == it.prayer } == true
             val open = LocalPrayerOpener.current
             Row(Modifier.testTag("times-row-${p.name}").fillMaxWidth().defaultMinSize(minHeight = LocalSpacing.current.rowMinHeight).then(if (open != null) Modifier.clickable { open(p) } else Modifier).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(p.shown(), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, fontWeight = if (upcoming) FontWeight.Bold else FontWeight.Normal, color = if (upcoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)

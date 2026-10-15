@@ -26,6 +26,7 @@ data class AppSettings(
     val placeSource: PlaceSource = PlaceSource.Manual,
     val method: Method = Method.Egyptian,
     val asr: AsrFactor = AsrFactor.Standard,
+    val highLatitude: HighLatitude = HighLatitude.AngleBased,
     val hijriAdjust: Int = 0,
     val theme: ThemeMode = ThemeMode.System,
     val accent: Accent = Accent.Orange,
@@ -87,6 +88,7 @@ object SettingsCodec {
             placeChosen = values["place"] != null,
             placeSource = if (values["place.source"] == "gps") PlaceSource.Gps else PlaceSource.Manual,
             method = pick(Method.entries, "method", { it.name }, d.method),
+            highLatitude = pick(HighLatitude.entries, "highlat", { it.key }, d.highLatitude),
             asr = pick(AsrFactor.entries, "asr", { it.name }, d.asr),
             hijriAdjust = values["hijri.adjust"]?.toIntOrNull()?.coerceIn(-1, 1) ?: 0,
             theme = pick(ThemeMode.entries, "theme", { it.key }, d.theme),
@@ -112,7 +114,7 @@ object SettingsCodec {
     /** All keys for [s]. The place key is written only once a place was chosen, so a fresh install stays "no place yet". */
     fun encode(s: AppSettings): Map<String, String> = buildMap {
         if (s.placeChosen) { put("place", s.placeName); put("place.source", s.placeSource.key); put("lat", s.latitude.toString()); put("lon", s.longitude.toString()) }
-        put("method", s.method.name); put("asr", s.asr.name); put("hijri.adjust", s.hijriAdjust.toString())
+        put("method", s.method.name); put("asr", s.asr.name); put("highlat", s.highLatitude.key); put("hijri.adjust", s.hijriAdjust.toString())
         put("theme", s.theme.key); put("accent", s.accent.key); put("textsize", s.textSize.key); put("density", s.density.key)
         put("motion", if (s.reduceMotion) "reduced" else "full")
         put("lang", s.language); put("digits", if (s.arabicDigits) "ar" else "en")
