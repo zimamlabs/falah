@@ -13,7 +13,7 @@
 
 ## What it is
 
-Falah (فلاح, success) shows today's five prayers and the sunrise for where you are, tells you which prayer is next and how long is left, keeps a log of the prayers you pray, and points to the qibla. It works offline, has no account and sends nothing anywhere.
+Android today, Linux later. Falah (فلاح, success) shows today's five prayers and the sunrise for where you are, tells you which prayer is next and how long is left, keeps a log of the prayers you pray, and points to the qibla. It works offline, has no account and sends nothing anywhere.
 
 ## Features
 
@@ -81,7 +81,8 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ```
 ./gradlew :shared:desktopTest            # the prayer-time tests
-./gradlew :composeApp:run                # run it on the desktop
+./gradlew :composeApp:desktopTest        # the storage tests
+./gradlew :composeApp:run                # run it on the desktop (development only, not packaged)
 ./gradlew :composeApp:assembleDebug      # Android debug APKs
 ```
 
