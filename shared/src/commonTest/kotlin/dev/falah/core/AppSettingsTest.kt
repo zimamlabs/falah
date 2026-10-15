@@ -53,3 +53,42 @@ class AppSettingsTest {
         assertEquals(listOf(Section.Home, Section.Qibla), s.sections)
     }
 }
+
+class TimesByTheMinuteTest {
+    private val cairo = kotlinx.datetime.LocalDate(2026, 3, 21)
+    private fun day() = PrayerTimes.compute(cairo, 30.0444, 31.2357, 2.0)
+
+    @Test fun shiftedMovesOnlyTheChosenPrayers() {
+        val base = day(); val moved = base.shifted(mapOf(Prayer.Maghrib to 5, Prayer.Fajr to -3))
+        assertEquals(base.maghrib!! + 5 / 60.0, moved.maghrib!!, 1e-9); assertEquals(base.fajr!! - 3 / 60.0, moved.fajr!!, 1e-9)
+        assertEquals(base.dhuhr, moved.dhuhr); assertEquals(base.isha, moved.isha)
+    }
+    @Test fun noAdjustmentGivesTheSameObject() { val base = day(); assertTrue(base.shifted(emptyMap()) === base) }
+    @Test fun anAbsentTimeStaysAbsent() { val polar = PrayerTimes.compute(kotlinx.datetime.LocalDate(2026, 6, 21), 69.65, 18.96, 2.0).shifted(mapOf(Prayer.Fajr to 10)); assertEquals(null, polar.fajr) }
+
+    @Test fun theAlertFollowsTheAdjustedTime() {
+        val zone = kotlinx.datetime.TimeZone.of("Africa/Cairo"); val now = kotlinx.datetime.Instant.parse("2026-03-21T00:00:00Z")
+        val plain = Schedule.next(now, zone, 30.0444, 31.2357, Method.Egyptian, AsrFactor.Standard, setOf(Prayer.Maghrib))!!
+        val later = Schedule.next(now, zone, 30.0444, 31.2357, Method.Egyptian, AsrFactor.Standard, setOf(Prayer.Maghrib), adjust = mapOf(Prayer.Maghrib to 7))!!
+        assertEquals(plain.atMillis + 7 * 60_000L, later.atMillis)
+    }
+    @Test fun theAlertFiresOnTheMinuteThatIsShown() {
+        val zone = kotlinx.datetime.TimeZone.of("Africa/Cairo"); val now = kotlinx.datetime.Instant.parse("2026-03-21T00:00:00Z")
+        val a = Schedule.next(now, zone, 30.0444, 31.2357, Method.Egyptian, AsrFactor.Standard, setOf(Prayer.Maghrib))!!
+        assertEquals(0L, a.atMillis % 60_000L)
+    }
+    @Test fun adjustmentsRoundTripThroughSettings() {
+        val s = AppSettings(adjust = mapOf(Prayer.Fajr to -4, Prayer.Isha to 12))
+        assertEquals(s, SettingsCodec.decode(SettingsCodec.encode(s)))
+        assertEquals(AppSettings(), SettingsCodec.decode(SettingsCodec.encode(s.copy(adjust = emptyMap()))))
+    }
+    @Test fun adjustmentsOutsideThirtyMinutesAreIgnored() = assertEquals(emptyMap(), SettingsCodec.decode(mapOf("adjust.Fajr" to "45")).adjust)
+}
+
+class CountdownTest {
+    @Test fun hoursAndMinutesAboveAMinute() { val c = Countdown.of(1 * 3600 + 43 * 60 + 20L); assertEquals(Triple(1, 43, false), Triple(c.hours, c.minutes, c.inLastMinute)) }
+    @Test fun justOverAMinuteStillShowsMinutes() { val c = Countdown.of(60); assertEquals(1, c.minutes); assertFalse(c.inLastMinute) }
+    @Test fun secondsOnlyInTheLastMinute() { val c = Countdown.of(59); assertTrue(c.inLastMinute); assertEquals(59, c.seconds) }
+    @Test fun neverNegative() = assertEquals(0, Countdown.of(-5).seconds)
+    @Test fun theScreenUpdatesEverySecondOnlyInTheLastMinute() { assertEquals(400, Countdown.nextTickMillis(30, 5_600)); assertEquals(20 + 15_000, Countdown.nextTickMillis(3600, 45_000)) }
+}

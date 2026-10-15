@@ -16,6 +16,13 @@ data class DayTimes(val fajr: Double?, val sunrise: Double?, val dhuhr: Double, 
 
 enum class Prayer(val label: String, val arabic: String) { Fajr("Fajr", "الفجر"), Sunrise("Sunrise", "الشروق"), Dhuhr("Dhuhr", "الظهر"), Asr("Asr", "العصر"), Maghrib("Maghrib", "المغرب"), Isha("Isha", "العشاء") }
 
+/** The times moved by the user's per-prayer minutes (plus or minus); a time that does not occur stays absent. */
+fun DayTimes.shifted(minutes: Map<Prayer, Int>): DayTimes {
+    if (minutes.values.all { it == 0 }) return this
+    fun m(p: Prayer, v: Double?) = v?.plus((minutes[p] ?: 0) / 60.0)
+    return DayTimes(m(Prayer.Fajr, fajr), m(Prayer.Sunrise, sunrise), dhuhr + (minutes[Prayer.Dhuhr] ?: 0) / 60.0, m(Prayer.Asr, asr), m(Prayer.Maghrib, maghrib), m(Prayer.Isha, isha))
+}
+
 fun DayTimes.of(p: Prayer): Double? = when (p) {
     Prayer.Fajr -> fajr; Prayer.Sunrise -> sunrise; Prayer.Dhuhr -> dhuhr; Prayer.Asr -> asr; Prayer.Maghrib -> maghrib; Prayer.Isha -> isha
 }

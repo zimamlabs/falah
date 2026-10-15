@@ -48,3 +48,10 @@ expect fun systemLanguage(): String
 fun Accent.label() = when (this) { Accent.Orange -> Str.AccentOrange; Accent.Emerald -> Str.AccentEmerald; Accent.Sapphire -> Str.AccentSapphire; Accent.Rose -> Str.AccentRose; Accent.Violet -> Str.AccentViolet; Accent.Gold -> Str.AccentGold }
 fun TextSize.label() = when (this) { TextSize.Small -> Str.TextSmall; TextSize.Normal -> Str.TextNormal; TextSize.Large -> Str.TextLarge; TextSize.Larger -> Str.TextLarger }
 fun Density.label() = if (this == Density.Comfortable) Str.DensityComfortable else Str.DensityCompact
+
+/** "1h 43m", "12m", or "40s" in the last minute. */
+@Composable fun countdownText(c: dev.falah.core.Countdown): String = when {
+    c.inLastMinute -> Str.CountdownS.t(c.seconds)
+    c.hours > 0 -> Str.CountdownHM.t(c.hours, c.minutes)
+    else -> Str.CountdownM.t(c.minutes)
+}
