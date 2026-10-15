@@ -96,7 +96,7 @@ private fun Hero(s: FalahState) {
             }
             Ring(n.progress, 124.dp, 10.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f), MaterialTheme.colorScheme.primary) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(countdownText(left), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(countdownText(left), maxLines = 1, softWrap = false, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Text(Str.TimeLeft.t(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                 }
             }

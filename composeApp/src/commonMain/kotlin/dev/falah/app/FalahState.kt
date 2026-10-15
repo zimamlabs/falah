@@ -89,9 +89,11 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     val next: NextPrayer by derivedStateOf {
         val h = hourNow
         val order = Prayer.entries.filter { it != Prayer.Sunrise }
-        val upcoming = order.firstOrNull { (times.of(it) ?: -1.0) > h }
+        // Compared on the minute that is shown, so the countdown and the list never disagree about which prayer is next.
+        val shown = { p: Prayer -> times.of(p)?.let { Math.round(it * 60) / 60.0 } }
+        val upcoming = order.firstOrNull { (shown(it) ?: -1.0) > h }
         val nextAt: Double; val prayer: Prayer; val tomorrow: Boolean
-        if (upcoming != null) { prayer = upcoming; nextAt = times.of(upcoming)!!; tomorrow = false }
+        if (upcoming != null) { prayer = upcoming; nextAt = shown(upcoming)!!; tomorrow = false }
         else {
             val t = PrayerTimes.compute(today.plus(1, DateTimeUnit.DAY), lat, lon, offset, method, asr).shifted(settings.adjust)
             prayer = Prayer.Fajr; nextAt = (t.fajr ?: 5.0) + 24.0; tomorrow = true

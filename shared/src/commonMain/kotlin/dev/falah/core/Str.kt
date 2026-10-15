@@ -64,7 +64,6 @@ enum class Str(val en: String, val ar: String) {
     HijriShort("{0} {1} {2}", "{0} {1} {2}"),
     NextPrayerLabel("NEXT PRAYER", "الصلاة القادمة"),
     NextPrayerTomorrow("NEXT PRAYER, TOMORROW", "الصلاة القادمة، غدًا"),
-    CountdownHM("{0}h {1}m", "{0}س {1}د"), CountdownM("{0}m", "{0}د"), CountdownS("{0}s", "{0}ث"),
     AdjustTitle("Adjust times", "تعديل المواقيت"),
     AdjustNote("Move a prayer by a few minutes, earlier (-) or later (+). Times, the countdown and reminders all follow.", "حرّك الصلاة بضع دقائق، أبكر (-) أو أجل (+). تتبعها المواقيت والعدّ التنازلي والتذكيرات."),
     AdjustMinutes("{0} min", "{0} دقيقة"),

@@ -61,7 +61,7 @@ enum class Tab(val label: Str, val icon: ImageVector, val section: Section?) {
 
 /** [resumed] changes each time the app comes back to the front, so the data folder can be picked again after the permission screen. */
 @Composable
-fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = MemoryFiles(), resumed: Int = 0, showSplash: Boolean = true) {
+fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = MemoryFiles(), resumed: Int = 0, showSplash: Boolean = true, active: Boolean = true) {
     val state = remember { FalahState(prefs, files, platform) }
     LaunchedEffect(resumed) {
         if (resumed > 0 && files.refresh()) {
@@ -69,11 +69,12 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
             state.reload()
         }
     }
-    // Ticks each second in the last minute before a prayer and on each whole minute otherwise.
-    LaunchedEffect(Unit) {
-        while (true) {
+    // One clock source: the system clock is read on every tick and the countdown is computed from the target time, so a
+    // late tick never drifts. The loop only runs while the app is in front; coming back reads the clock at once.
+    LaunchedEffect(active) {
+        while (active) {
             val now = Clock.System.now(); state.now = now
-            delay(Countdown.nextTickMillis(state.secondsLeft(), now.toEpochMilliseconds()))
+            delay(Countdown.nextTickMillis(now.toEpochMilliseconds()))
         }
     }
     val language = I18n.resolve(state.langChoice, systemLanguage())
