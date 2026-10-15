@@ -40,7 +40,27 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
     var notifyTick by mutableIntStateOf(0)
     var tasbih by mutableStateOf(TasbihLog())
 
+    /** Data files that exist but could not be read; they are never written over. */
+    var unreadable by mutableStateOf(emptySet<String>())
+        private set
+    /** True when the last save did not reach the disk. */
+    var saveFailed by mutableStateOf(false)
+        private set
+
     init { reload() }
+
+    private fun loadData(name: String): String = when (val r = files.load(name)) {
+        is FileLoad.Loaded -> r.text
+        FileLoad.Missing -> ""
+        FileLoad.Unreadable -> { unreadable = unreadable + name; "" }
+    }
+
+    /** Saves a data file unless it was unreadable at the start (writing then would replace the real data with an empty file). */
+    private fun save(name: String, text: String): Boolean {
+        if (name in unreadable) { saveFailed = true; return false }
+        saveFailed = !files.write(name, text)
+        return !saveFailed
+    }
 
     /** Reads everything again from the saved values and files (at start, and after the data folder changed). */
     fun reload() {
@@ -53,8 +73,9 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
         langChoice = prefs.get("lang") ?: "system"
         arabicDigits = prefs.get("digits") == "ar"
         hijriAdjust = prefs.get("hijri.adjust")?.toIntOrNull() ?: 0
-        log = PrayerLog.decode(files.read(LOG_FILE).orEmpty())
-        tasbih = TasbihLog.decode(files.read(TASBIH_FILE).orEmpty())
+        unreadable = emptySet(); saveFailed = false
+        log = PrayerLog.decode(loadData(LOG_FILE))
+        tasbih = TasbihLog.decode(loadData(TASBIH_FILE))
     }
 
     private val zone get() = TimeZone.currentSystemDefault()
@@ -108,9 +129,15 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
 
     fun prayed(p: Prayer): Boolean = p in log.done(today)
     fun mark(p: Prayer, on: Boolean) = markOn(today, p, on)
-    fun markOn(date: kotlinx.datetime.LocalDate, p: Prayer, on: Boolean) { log = log.mark(date, p, on); files.write(LOG_FILE, log.encode()) }
+    fun markOn(date: kotlinx.datetime.LocalDate, p: Prayer, on: Boolean) {
+        val next = log.mark(date, p, on)
+        if (save(LOG_FILE, next.encode()) || LOG_FILE !in unreadable) log = next
+    }
 
-    fun tap(key: String, n: Int = 1) { tasbih = tasbih.add(today, key, n); files.write(TASBIH_FILE, tasbih.encode()) }
+    fun tap(key: String, n: Int = 1) {
+        val next = tasbih.add(today, key, n)
+        if (save(TASBIH_FILE, next.encode()) || TASBIH_FILE !in unreadable) tasbih = next
+    }
 
     /** Minutes before the prayer the notification fires; 0 is at the prayer. */
     fun offsetOf(p: Prayer): Int { notifyTick; return prefs.get("offset.${p.name}")?.toIntOrNull() ?: 0 }

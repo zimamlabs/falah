@@ -11,6 +11,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -84,7 +87,15 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
                     }
                 },
             ) { inner ->
-                Box(Modifier.padding(inner)) {
+                Column(Modifier.padding(inner)) {
+                if (state.unreadable.isNotEmpty() || state.saveFailed) {
+                    Text(
+                        (if (state.unreadable.isNotEmpty()) Str.DataUnreadable else Str.SaveFailed).t(),
+                        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer).padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+                Box(Modifier.weight(1f)) {
                     when (tab) {
                         Tab.Home -> HomePage(state, { tab = it }, hiddenNotes) { hiddenNotes = true; prefs.set("notes.hidden", APP_VERSION) }
                         Tab.Times -> TimesTab(state)
@@ -95,11 +106,12 @@ fun FalahApp(prefs: Prefs, platform: Platform = NoPlatform, files: AppFiles = Me
                         Tab.About -> AboutPage(state) { tourAgain = true }
                     }
                 }
+                }
             }
             if (welcome == Welcome.WhatsNew && !splash) AlertDialog(
                 onDismissRequest = {},
                 title = { Text(Str.WhatsNewIn.t(APP_VERSION)) },
-                text = { androidx.compose.foundation.layout.Column { ReleaseNotes.forVersion(APP_VERSION, lang()).forEach { Text("•  ${num(it)}") } } },
+                text = { Column { ReleaseNotes.forVersion(APP_VERSION, lang()).forEach { Text("•  ${num(it)}") } } },
                 confirmButton = { TextButton({ prefs.set("seen.version", APP_VERSION); prefs.set("tour.done", "1"); welcome = Welcome.Nothing }) { Text(Str.Close.t()) } },
             )
             AnimatedVisibility(splash, exit = fadeOut()) { Splash { splash = false } }
