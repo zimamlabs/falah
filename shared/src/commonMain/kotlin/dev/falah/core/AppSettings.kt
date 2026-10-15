@@ -22,6 +22,8 @@ data class AppSettings(
     val longitude: Double = 31.2357,
     /** False until the user picked or typed a place (the Cairo default is then only a placeholder). */
     val placeChosen: Boolean = false,
+    /** How the place was set: picked or typed by the user, or found by the phone's location. */
+    val placeSource: PlaceSource = PlaceSource.Manual,
     val method: Method = Method.Egyptian,
     val asr: AsrFactor = AsrFactor.Standard,
     val hijriAdjust: Int = 0,
@@ -83,6 +85,7 @@ object SettingsCodec {
             placeName = values["place"]?.takeIf { it.isNotBlank() } ?: d.placeName,
             latitude = lat, longitude = lon,
             placeChosen = values["place"] != null,
+            placeSource = if (values["place.source"] == "gps") PlaceSource.Gps else PlaceSource.Manual,
             method = pick(Method.entries, "method", { it.name }, d.method),
             asr = pick(AsrFactor.entries, "asr", { it.name }, d.asr),
             hijriAdjust = values["hijri.adjust"]?.toIntOrNull()?.coerceIn(-1, 1) ?: 0,
@@ -108,7 +111,7 @@ object SettingsCodec {
 
     /** All keys for [s]. The place key is written only once a place was chosen, so a fresh install stays "no place yet". */
     fun encode(s: AppSettings): Map<String, String> = buildMap {
-        if (s.placeChosen) { put("place", s.placeName); put("lat", s.latitude.toString()); put("lon", s.longitude.toString()) }
+        if (s.placeChosen) { put("place", s.placeName); put("place.source", s.placeSource.key); put("lat", s.latitude.toString()); put("lon", s.longitude.toString()) }
         put("method", s.method.name); put("asr", s.asr.name); put("hijri.adjust", s.hijriAdjust.toString())
         put("theme", s.theme.key); put("accent", s.accent.key); put("textsize", s.textSize.key); put("density", s.density.key)
         put("motion", if (s.reduceMotion) "reduced" else "full")

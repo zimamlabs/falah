@@ -43,7 +43,7 @@ expect fun systemLanguage(): String
 @Composable fun AsrFactor.shown(): String = title(lang())
 @Composable fun Dhikr.shown(): String = title(lang())
 @Composable fun Place.shown(): String = if (lang() == Lang.Ar) arabic else name
-@Composable fun placeShown(name: String): String = Places.firstOrNull { it.name == name }?.shown() ?: name
+@Composable fun placeShown(name: String): String = Places.firstOrNull { it.name == name }?.shown() ?: when (name) { Str.GpsPlaceName.en -> Str.GpsPlaceName.t(); Str.CustomPlaceDefaultName.en -> Str.CustomPlaceDefaultName.t(); else -> name }
 
 fun Accent.label() = when (this) { Accent.Orange -> Str.AccentOrange; Accent.Emerald -> Str.AccentEmerald; Accent.Sapphire -> Str.AccentSapphire; Accent.Rose -> Str.AccentRose; Accent.Violet -> Str.AccentViolet; Accent.Gold -> Str.AccentGold }
 fun TextSize.label() = when (this) { TextSize.Small -> Str.TextSmall; TextSize.Normal -> Str.TextNormal; TextSize.Large -> Str.TextLarge; TextSize.Larger -> Str.TextLarger }

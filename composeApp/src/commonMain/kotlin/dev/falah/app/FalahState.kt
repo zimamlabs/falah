@@ -119,8 +119,31 @@ class FalahState(val prefs: Prefs, val files: AppFiles, val platform: Platform) 
 
     val placeChosen: Boolean get() = settings.placeChosen
 
-    fun choosePlace(p: Place) = update { copy(placeName = p.name, latitude = p.latitude, longitude = p.longitude, placeChosen = true) }
+    fun choosePlace(p: Place, source: dev.falah.core.PlaceSource = dev.falah.core.PlaceSource.Manual) = update { copy(placeName = p.name, latitude = p.latitude, longitude = p.longitude, placeChosen = true, placeSource = source) }
     fun chooseCustomPlace(name: String, latitude: Double, longitude: Double) = choosePlace(Place(name.trim().ifEmpty { Str.CustomPlaceDefaultName.en }, latitude, longitude))
+    /** Why the last "Use my location" did not give a place; null while it works or after it succeeded. */
+    var locationProblem by mutableStateOf<dev.falah.core.LocationFix?>(null)
+        private set
+    var locating by mutableStateOf(false)
+        private set
+
+    /** Asks the phone for its position and, if it comes, uses it as the place (named after a built-in city within 25 km, otherwise "My location"). Never falls back to a default place. */
+    fun useLocation() {
+        locating = true; locationProblem = null
+        platform.requestLocation { fix ->
+            locating = false
+            when {
+                fix is dev.falah.core.LocationFix.Found && dev.falah.core.Geo.valid(fix.latitude, fix.longitude) -> {
+                    val near = dev.falah.core.Geo.nearest(fix.latitude, fix.longitude, Places.map { Triple(it.name, it.latitude, it.longitude) }, 25.0)
+                    choosePlace(Place(near ?: Str.GpsPlaceName.en, fix.latitude, fix.longitude), dev.falah.core.PlaceSource.Gps)
+                }
+                fix is dev.falah.core.LocationFix.Found -> locationProblem = dev.falah.core.LocationFix.Unavailable
+                else -> locationProblem = fix
+            }
+        }
+    }
+    fun clearLocationProblem() { locationProblem = null }
+
     fun chooseMethod(m: Method) = update { copy(method = m) }
     fun chooseAsr(a: AsrFactor) = update { copy(asr = a) }
     fun chooseTheme(mode: ThemeMode) = update { copy(theme = mode) }
